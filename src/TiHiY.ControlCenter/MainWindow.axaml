@@ -1,0 +1,67 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TiHiY.ControlCenter.MainWindow"
+        Title="TiHiY-DED Control Center"
+        Width="1100" Height="720"
+        MinWidth="900" MinHeight="600">
+  <Grid RowDefinitions="Auto,*" Background="#101418">
+    <Border Padding="18" Background="#151B21">
+      <StackPanel>
+        <TextBlock Text="TiHiY-DED Control Center" FontSize="26" FontWeight="Bold" Foreground="#EAF2F8"/>
+        <TextBlock Text="HOSAM XML Editor для Star Citizen / T.16000M Left + Mouse" Foreground="#9FB2C2" Margin="0,4,0,0"/>
+      </StackPanel>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="330,*" Margin="16" ColumnSpacing="16">
+      <Border Background="#182028" CornerRadius="12" Padding="16">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Дії" FontSize="18" FontWeight="Bold" Foreground="#EAF2F8"/>
+          <Button Name="OpenButton" Content="Відкрити XML" />
+          <Button Name="BackupButton" Content="Backup XML" />
+          <Button Name="DefaultsButton" Content="Apply TiHiY Defaults" />
+          <Button Name="SaveButton" Content="Зберегти як..." />
+          <Separator/>
+          <TextBlock Text="Поточний файл" Foreground="#9FB2C2"/>
+          <TextBlock Name="FileText" Text="Файл не відкрито" TextWrapping="Wrap" Foreground="#EAF2F8"/>
+          <Separator/>
+          <TextBlock Text="Статус" Foreground="#9FB2C2"/>
+          <TextBlock Name="StatusText" Text="Готово" TextWrapping="Wrap" Foreground="#80FFB0"/>
+        </StackPanel>
+      </Border>
+
+      <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="12">
+        <Border Background="#182028" CornerRadius="12" Padding="16">
+          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+            <StackPanel>
+              <TextBlock Text="X" Foreground="#9FB2C2"/>
+              <TextBox Name="XDeadzone" Watermark="Deadzone"/>
+              <TextBox Name="XSaturation" Watermark="Saturation" Margin="0,6,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+              <TextBlock Text="Y" Foreground="#9FB2C2"/>
+              <TextBox Name="YDeadzone" Watermark="Deadzone"/>
+              <TextBox Name="YSaturation" Watermark="Saturation" Margin="0,6,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="Twist / RotZ" Foreground="#9FB2C2"/>
+              <TextBox Name="TwistDeadzone" Watermark="Deadzone"/>
+              <TextBox Name="TwistSaturation" Watermark="Saturation" Margin="0,6,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="3">
+              <TextBlock Text="Slider" Foreground="#9FB2C2"/>
+              <TextBox Name="SliderDeadzone" Watermark="Deadzone"/>
+              <TextBox Name="SliderSaturation" Watermark="Saturation" Margin="0,6,0,0"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Background="#182028" CornerRadius="12" Padding="16">
+          <Grid RowDefinitions="Auto,*">
+            <TextBlock Text="Бінди XML" FontSize="18" FontWeight="Bold" Foreground="#EAF2F8"/>
+            <ListBox Grid.Row="1" Name="BindingsList" Margin="0,12,0,0"/>
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>
