@@ -1,34 +1,26 @@
-# TiHiY-DED Control Center
+# TiHiY Control Center v0.1
 
-Перший GitHub-ready реліз конфігуратора для Star Citizen HOSAM профілю.
+Реальний GitHub-ready проєкт для збірки Windows-програми через GitHub Actions без Visual Studio на ПК.
 
 ## Що вже є
-
 - Avalonia UI / .NET 8
-- Відкриття XML Star Citizen
-- Перегляд усіх біндів
-- Редагування Deadzone/Saturation для T.16000M: X, Y, RotZ, Slider
+- Відкриття прикладного Star Citizen XML з `assets/profiles/layout_300126_exported.xml`
+- Перегляд `deviceoptions` / осей
+- Перегляд усіх rebind-біндів
 - Backup XML
-- Save As для сумісного XML
-- GitHub Actions збірка Windows portable `.exe` без Visual Studio
+- Apply TiHiY Defaults для T.16000M
+- Export XML на Desktop
+- GitHub Actions для збірки Windows portable `.exe`
 
-## Як отримати `.exe` без Visual Studio
+## Як завантажити на GitHub
+1. Розпакуй ZIP.
+2. У репозиторії GitHub натисни `uploading an existing file`.
+3. Перетягни ВМІСТ папки, не сам ZIP.
+4. Натисни `Commit changes`.
+5. Перейди у вкладку `Actions`.
+6. Запусти `Build Windows Portable`.
+7. Після завершення відкрий run і скачай artifact `TiHiY-Control-Center-win-x64`.
+8. Розпакуй artifact і запусти `TiHiY.ControlCenter.exe`.
 
-1. Створи репозиторій на GitHub.
-2. Завантаж усі файли з цього ZIP у репозиторій.
-3. Відкрий вкладку **Actions**.
-4. Запусти workflow **Build Windows Portable**.
-5. Після завершення відкрий job → **Artifacts**.
-6. Скачай `TiHiY-Control-Center-win-x64.zip`.
-7. Розпакуй і запускай `TiHiY Control Center.exe`.
-
-## Як користуватись програмою
-
-1. Натисни **Відкрити XML**.
-2. Обери `layout_300126_exported.xml` або свій актуальний XML.
-3. Натисни **Backup XML**.
-4. За потреби натисни **Apply TiHiY Defaults**.
-5. Натисни **Зберегти як...**.
-6. Імпортуй збережений XML у Star Citizen.
-
-Дивись `docs/IMPORT_TO_STAR_CITIZEN.md`.
+## Важливо
+Це перша робоча база. Тут ще немає live-тестера фізичних кнопок джойстика. Це буде наступний етап.

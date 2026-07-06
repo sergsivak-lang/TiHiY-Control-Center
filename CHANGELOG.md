@@ -1,10 +1,6 @@
 # Changelog
 
-## v0.1 GitHub
-
-- Додано Avalonia UI застосунок.
-- Додано XML loader/saver.
-- Додано редактор Deadzone/Saturation.
-- Додано список біндів XML.
-- Додано Backup.
-- Додано GitHub Actions для автоматичної збірки Windows portable `.exe`.
+## v0.1
+- Створено реальний Avalonia/.NET 8 проєкт.
+- Додано GitHub Actions для збірки Windows portable.
+- Додано XML parser, axis list, binding list, backup, export.
