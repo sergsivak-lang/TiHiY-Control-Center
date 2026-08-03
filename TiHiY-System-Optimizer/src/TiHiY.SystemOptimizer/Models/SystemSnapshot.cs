@@ -9,13 +9,16 @@ public sealed class SystemSnapshot
     public string Bios { get; init; } = "Невідомо";
     public string PowerPlan { get; init; } = "Невідомо";
 
-    public string? StarCitizenPath { get; init; }
+    public string? RsiLauncherPath { get; init; }
     public string? ObsPath { get; init; }
     public string? DiscordPath { get; init; }
     public string? SteelSeriesPath { get; init; }
+    public IReadOnlyList<StarCitizenInstallation> StarCitizenInstallations { get; init; } = Array.Empty<StarCitizenInstallation>();
     public IReadOnlyList<string> StarCitizenShaderCaches { get; init; } = Array.Empty<string>();
 
-    public bool StarCitizenFound => !string.IsNullOrWhiteSpace(StarCitizenPath);
+    public string? StarCitizenPath => StarCitizenInstallations.FirstOrDefault()?.Path;
+    public bool StarCitizenFound => StarCitizenInstallations.Count > 0;
+    public bool RsiLauncherFound => !string.IsNullOrWhiteSpace(RsiLauncherPath);
     public bool ObsFound => !string.IsNullOrWhiteSpace(ObsPath);
     public bool DiscordFound => !string.IsNullOrWhiteSpace(DiscordPath);
     public bool SteelSeriesFound => !string.IsNullOrWhiteSpace(SteelSeriesPath);
