@@ -20,6 +20,23 @@ jobs:
         run: dotnet build TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln -c Release --no-restore
       - name: Publish single EXE
         run: dotnet publish TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/TiHiY.SystemOptimizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/TiHiY-System-Optimizer
+      - name: UI snapshot 1280x800
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/ui-preview | Out-Null
+          & "artifacts/TiHiY-System-Optimizer/TiHiY.SystemOptimizer.exe" --snapshot "artifacts/ui-preview/optimizer-1280x800.png" 1280 800
+          if (!(Test-Path "artifacts/ui-preview/optimizer-1280x800.png")) { throw "UI snapshot was not created" }
+      - name: UI snapshot 1600x900
+        shell: pwsh
+        run: |
+          & "artifacts/TiHiY-System-Optimizer/TiHiY.SystemOptimizer.exe" --snapshot "artifacts/ui-preview/optimizer-1600x900.png" 1600 900
+          if (!(Test-Path "artifacts/ui-preview/optimizer-1600x900.png")) { throw "UI snapshot was not created" }
+      - name: Upload UI previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: TiHiY-System-Optimizer-ui-preview
+          path: artifacts/ui-preview/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: TiHiY-System-Optimizer-v0.1-win-x64
