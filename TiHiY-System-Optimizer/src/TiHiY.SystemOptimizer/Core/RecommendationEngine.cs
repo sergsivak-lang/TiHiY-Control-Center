@@ -79,6 +79,23 @@ public sealed class RecommendationEngine
             RequiresRestart = false
         });
 
+        if (snapshot.StarCitizenFound && snapshot.StarCitizenShaderCaches.Count > 0)
+        {
+            var cacheCount = snapshot.StarCitizenShaderCaches.Count;
+            list.Add(new OptimizationItem
+            {
+                Id = "sc-shaders",
+                Title = "Star Citizen — кеш шейдерів",
+                Summary = $"Знайдено старий кеш шейдерів ({cacheCount}). Можна безпечно очистити перед наступним запуском гри.",
+                Details = "Що зробить програма: закриє дію, якщо Star Citizen зараз запущений, а після підтвердження видалить лише знайдені папки кешу шейдерів Star Citizen. Файли гри, налаштування керування та USER.cfg не видаляються. Після очищення гра створить кеш заново; перший запуск може мати короткі підфризи, поки шейдери перебудовуються.",
+                CurrentValue = $"Кеш знайдено: {cacheCount}",
+                RecommendedValue = "Очистити кеш",
+                Level = RecommendationLevel.Recommended,
+                Selected = true,
+                RequiresRestart = false
+            });
+        }
+
         return list;
     }
 
