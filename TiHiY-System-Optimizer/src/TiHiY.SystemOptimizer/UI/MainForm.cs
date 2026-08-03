@@ -27,6 +27,7 @@ public sealed class MainForm : Form
     private readonly FlowLayoutPanel _cards = new();
     private readonly Label _statusLabel = new();
     private readonly Label _scoreLabel = new();
+    private readonly Label _scoreCaption = new();
     private readonly Label _recommendationCountLabel = new();
     private readonly Label _cpuValue = new();
     private readonly Label _gpuValue = new();
@@ -48,7 +49,7 @@ public sealed class MainForm : Form
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(1040, 700);
-        ClientSize = new Size(1240, 800);
+        ClientSize = new Size(1280, 800);
         BackColor = Theme.Window;
         ForeColor = Theme.Text;
         Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
@@ -56,6 +57,7 @@ public sealed class MainForm : Form
         KeyPreview = true;
 
         BuildUi();
+
         Shown += async (_, _) => await ScanAsync();
         SizeChanged += (_, _) =>
         {
@@ -71,13 +73,13 @@ public sealed class MainForm : Form
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Window,
             ColumnCount = 1,
             RowCount = 2,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         root.Controls.Add(CreateTitleBar(), 0, 0);
@@ -94,69 +96,78 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             BackColor = Theme.Window,
             Margin = Padding.Empty,
-            Padding = new Padding(14, 0, 0, 0)
+            Padding = new Padding(12, 0, 0, 0)
         };
 
-        var layout = new TableLayoutPanel
+        var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Window,
             ColumnCount = 3,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 138F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 138F));
 
-        var mark = new Label
+        var badge = new RoundedPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(2, 7, 4, 7),
+            Padding = Padding.Empty,
+            Radius = 8,
+            BackColor = Theme.AccentSoft,
+            BorderColor = Color.FromArgb(70, Theme.Accent)
+        };
+        badge.Controls.Add(new Label
         {
             Text = "T",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
-            Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
             ForeColor = Theme.Accent,
-            Margin = new Padding(0, 4, 0, 4)
-        };
+            Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+            BackColor = Theme.AccentSoft
+        });
 
         var title = new Label
         {
             Text = "TiHiY System Optimizer",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
-            Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-            ForeColor = Theme.Text,
-            Padding = new Padding(8, 0, 0, 0)
+            Padding = new Padding(8, 0, 0, 0),
+            ForeColor = Theme.Muted,
+            Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+            BackColor = Theme.Window
         };
 
-        var windowButtons = new TableLayoutPanel
+        var controls = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
-        windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
+        controls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+        controls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+        controls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
 
-        var minimize = CreateTitleButton("—", () => WindowState = FormWindowState.Minimized);
-        _maximizeButton.Text = "□";
-        ConfigureTitleButton(_maximizeButton, ToggleMaximize);
-        var close = CreateTitleButton("×", Close, isClose: true);
+        var minimize = CreateWindowButton("—", () => WindowState = FormWindowState.Minimized);
+        ConfigureWindowButton(_maximizeButton, "□", ToggleMaximize);
+        var close = CreateWindowButton("×", Close, true);
+        controls.Controls.Add(minimize, 0, 0);
+        controls.Controls.Add(_maximizeButton, 1, 0);
+        controls.Controls.Add(close, 2, 0);
 
-        windowButtons.Controls.Add(minimize, 0, 0);
-        windowButtons.Controls.Add(_maximizeButton, 1, 0);
-        windowButtons.Controls.Add(close, 2, 0);
+        grid.Controls.Add(badge, 0, 0);
+        grid.Controls.Add(title, 1, 0);
+        grid.Controls.Add(controls, 2, 0);
+        titleBar.Controls.Add(grid);
 
-        layout.Controls.Add(mark, 0, 0);
-        layout.Controls.Add(title, 1, 0);
-        layout.Controls.Add(windowButtons, 2, 0);
-        titleBar.Controls.Add(layout);
-
-        void BeginWindowDrag(object? sender, MouseEventArgs e)
+        MouseEventHandler drag = (_, e) =>
         {
             if (e.Button != MouseButtons.Left)
             {
@@ -165,14 +176,13 @@ public sealed class MainForm : Form
 
             ReleaseCapture();
             SendMessage(Handle, WmNcLButtonDown, HtCaption, 0);
-        }
+        };
 
-        titleBar.MouseDown += BeginWindowDrag;
-        layout.MouseDown += BeginWindowDrag;
-        title.MouseDown += BeginWindowDrag;
-        mark.MouseDown += BeginWindowDrag;
+        titleBar.MouseDown += drag;
+        grid.MouseDown += drag;
+        title.MouseDown += drag;
         titleBar.DoubleClick += (_, _) => ToggleMaximize();
-        layout.DoubleClick += (_, _) => ToggleMaximize();
+        grid.DoubleClick += (_, _) => ToggleMaximize();
         title.DoubleClick += (_, _) => ToggleMaximize();
 
         return titleBar;
@@ -183,13 +193,13 @@ public sealed class MainForm : Form
         var body = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Window,
             ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
-        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 232F));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 216F));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
         body.Controls.Add(CreateSidebar(), 0, 0);
@@ -203,80 +213,83 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             BackColor = Theme.Sidebar,
-            Padding = new Padding(20, 22, 20, 20),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = new Padding(18, 18, 18, 18)
         };
 
-        var layout = new TableLayoutPanel
+        var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Sidebar,
             ColumnCount = 1,
             RowCount = 4,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Sidebar
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 86F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 86F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 74F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
 
-        layout.Controls.Add(CreateBrand(), 0, 0);
-        layout.Controls.Add(new Label
+        grid.Controls.Add(CreateBrand(), 0, 0);
+        grid.Controls.Add(new Label
         {
             Text = "НАВІГАЦІЯ",
             Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft,
-            Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold),
-            ForeColor = Theme.Subtle
+            TextAlign = ContentAlignment.BottomLeft,
+            ForeColor = Theme.Subtle,
+            Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold),
+            BackColor = Theme.Sidebar
         }, 0, 1);
 
-        var navigation = new FlowLayoutPanel
+        var nav = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoScroll = false,
-            BackColor = Theme.Sidebar,
             Margin = new Padding(0, 10, 0, 0),
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Sidebar
         };
 
-        var home = CreateNavButton("Головна", true, async () => await ScanAsync());
-        var scan = CreateNavButton("Повторити аналіз", false, async () => await ScanAsync());
+        var overview = CreateNavButton("Огляд системи", true, () => { _ = ScanAsync(); });
+        var refresh = CreateNavButton("Повторити аналіз", false, () => { _ = ScanAsync(); });
         var backups = CreateNavButton("Резервні копії", false, OpenBackupsFolder);
-        navigation.Controls.Add(home);
-        navigation.Controls.Add(scan);
-        navigation.Controls.Add(backups);
-        navigation.Resize += (_, _) =>
+        nav.Controls.Add(overview);
+        nav.Controls.Add(refresh);
+        nav.Controls.Add(backups);
+        nav.Resize += (_, _) =>
         {
-            foreach (Control control in navigation.Controls)
+            var width = Math.Max(120, nav.ClientSize.Width);
+            foreach (Control control in nav.Controls)
             {
-                control.Width = Math.Max(120, navigation.ClientSize.Width);
+                control.Width = width;
             }
         };
-        layout.Controls.Add(navigation, 0, 2);
+        grid.Controls.Add(nav, 0, 2);
 
-        var footer = new RoundedPanel
+        var safe = new RoundedPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Surface,
-            BorderColor = Theme.Border,
+            Margin = new Padding(0, 14, 0, 0),
+            Padding = new Padding(14, 10, 14, 10),
             Radius = 14,
-            Margin = new Padding(0, 12, 0, 0),
-            Padding = new Padding(14, 10, 14, 10)
+            BackColor = Theme.Surface,
+            BorderColor = Theme.Border
         };
-        footer.Controls.Add(new Label
+        safe.Controls.Add(new Label
         {
-            Text = "Безпечний режим\nЖодних змін без підтвердження",
+            Text = "БЕЗПЕЧНИЙ РЕЖИМ\nЗміни — лише після вашого підтвердження",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Theme.Muted,
-            Font = new Font("Segoe UI", 8.5F)
+            Font = new Font("Segoe UI", 8F),
+            BackColor = Theme.Surface
         });
-        layout.Controls.Add(footer, 0, 3);
+        grid.Controls.Add(safe, 0, 3);
 
-        sidebar.Controls.Add(layout);
+        sidebar.Controls.Add(grid);
         return sidebar;
     }
 
@@ -288,18 +301,19 @@ public sealed class MainForm : Form
             ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Sidebar
         };
-        brand.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 54F));
+        brand.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
         brand.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
         var logo = new RoundedPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.AccentSoft,
-            BorderColor = Color.FromArgb(70, Theme.Accent),
+            Margin = new Padding(0, 4, 10, 14),
             Radius = 14,
-            Margin = new Padding(0, 6, 10, 18)
+            BackColor = Theme.AccentSoft,
+            BorderColor = Color.FromArgb(70, Theme.Accent)
         };
         logo.Controls.Add(new Label
         {
@@ -307,16 +321,18 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
             ForeColor = Theme.Accent,
-            Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold)
+            Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold),
+            BackColor = Theme.AccentSoft
         });
 
         var text = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            RowCount = 2,
             ColumnCount = 1,
+            RowCount = 2,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 8, 0, 12)
+            Padding = new Padding(0, 5, 0, 12),
+            BackColor = Theme.Sidebar
         };
         text.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
         text.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
@@ -326,7 +342,8 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.BottomLeft,
             ForeColor = Theme.Text,
-            Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold)
+            Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold),
+            BackColor = Theme.Sidebar
         }, 0, 0);
         text.Controls.Add(new Label
         {
@@ -334,7 +351,8 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.TopLeft,
             ForeColor = Theme.Accent,
-            Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold)
+            Font = new Font("Segoe UI Semibold", 7F, FontStyle.Bold),
+            BackColor = Theme.Sidebar
         }, 0, 1);
 
         brand.Controls.Add(logo, 0, 0);
@@ -347,23 +365,23 @@ public sealed class MainForm : Form
         var host = new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Window,
-            Padding = new Padding(28, 22, 28, 24),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = new Padding(26, 20, 26, 22),
+            BackColor = Theme.Window
         };
 
         var dashboard = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Window,
             ColumnCount = 1,
             RowCount = 4,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
-        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
-        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 178F));
-        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
+        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 66F));
+        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 184F));
+        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         dashboard.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         dashboard.Controls.Add(CreateHeader(), 0, 0);
@@ -371,12 +389,12 @@ public sealed class MainForm : Form
         dashboard.Controls.Add(CreateRecommendationsHeader(), 0, 2);
 
         _cards.Dock = DockStyle.Fill;
-        _cards.AutoScroll = true;
         _cards.FlowDirection = FlowDirection.TopDown;
         _cards.WrapContents = false;
-        _cards.BackColor = Theme.Window;
+        _cards.AutoScroll = true;
         _cards.Margin = Padding.Empty;
-        _cards.Padding = new Padding(0, 0, 8, 0);
+        _cards.Padding = new Padding(0, 0, 6, 0);
+        _cards.BackColor = Theme.Window;
         _cards.Resize += (_, _) => ResizeRecommendationCards();
         dashboard.Controls.Add(_cards, 0, 3);
 
@@ -392,7 +410,8 @@ public sealed class MainForm : Form
             ColumnCount = 1,
             RowCount = 2,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Window
         };
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
@@ -402,16 +421,18 @@ public sealed class MainForm : Form
             Text = "Стан вашого ПК",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.BottomLeft,
-            Font = new Font("Segoe UI Semibold", 23F, FontStyle.Bold),
-            ForeColor = Theme.Text
+            ForeColor = Theme.Text,
+            Font = new Font("Segoe UI Semibold", 22F, FontStyle.Bold),
+            BackColor = Theme.Window
         }, 0, 0);
 
         _statusLabel.Text = "Підготовка до аналізу…";
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.TopLeft;
         _statusLabel.ForeColor = Theme.Muted;
-        _statusLabel.Font = new Font("Segoe UI", 10F);
+        _statusLabel.Font = new Font("Segoe UI", 9.5F);
         _statusLabel.AutoEllipsis = true;
+        _statusLabel.BackColor = Theme.Window;
         header.Controls.Add(_statusLabel, 0, 1);
 
         return header;
@@ -419,35 +440,34 @@ public sealed class MainForm : Form
 
     private Control CreateSummaryCard()
     {
-        var summary = new RoundedPanel
+        var card = new RoundedPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Card,
-            BorderColor = Theme.Border,
-            BorderThickness = 1F,
-            Radius = 20,
             Margin = new Padding(0, 0, 0, 10),
-            Padding = new Padding(22, 20, 22, 20)
+            Padding = new Padding(20, 18, 20, 18),
+            Radius = 20,
+            BackColor = Theme.Card,
+            BorderColor = Theme.Border
         };
 
-        var layout = new TableLayoutPanel
+        var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Card,
             ColumnCount = 3,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            BackColor = Theme.Card
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 168F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 224F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 218F));
 
-        layout.Controls.Add(CreateScoreBlock(), 0, 0);
-        layout.Controls.Add(CreateSystemMetrics(), 1, 0);
-        layout.Controls.Add(CreateSummaryActions(), 2, 0);
-        summary.Controls.Add(layout);
-        return summary;
+        grid.Controls.Add(CreateScoreBlock(), 0, 0);
+        grid.Controls.Add(CreateMetricsBlock(), 1, 0);
+        grid.Controls.Add(CreateActionsBlock(), 2, 0);
+        card.Controls.Add(grid);
+        return card;
     }
 
     private Control CreateScoreBlock()
@@ -458,48 +478,51 @@ public sealed class MainForm : Form
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = new Padding(4, 6, 14, 6),
+            BackColor = Theme.Card
         };
-        block.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
-        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
         block.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
+        block.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+
+        block.Controls.Add(new Label
+        {
+            Text = "СТАН СИСТЕМИ",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.BottomLeft,
+            ForeColor = Theme.Subtle,
+            Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold),
+            BackColor = Theme.Card
+        }, 0, 0);
 
         _scoreLabel.Text = "—";
         _scoreLabel.Dock = DockStyle.Fill;
-        _scoreLabel.TextAlign = ContentAlignment.BottomLeft;
-        _scoreLabel.Font = new Font("Segoe UI Semibold", 36F, FontStyle.Bold);
+        _scoreLabel.TextAlign = ContentAlignment.MiddleLeft;
         _scoreLabel.ForeColor = Theme.Accent;
+        _scoreLabel.Font = new Font("Segoe UI Semibold", 27F, FontStyle.Bold);
+        _scoreLabel.BackColor = Theme.Card;
+        block.Controls.Add(_scoreLabel, 0, 1);
 
-        block.Controls.Add(_scoreLabel, 0, 0);
-        block.Controls.Add(new Label
-        {
-            Text = "ОЦІНКА СИСТЕМИ",
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Theme.Subtle,
-            Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold)
-        }, 0, 1);
-        block.Controls.Add(new Label
-        {
-            Text = "Безпечний аналіз",
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Theme.Good,
-            Font = new Font("Segoe UI", 8.5F)
-        }, 0, 2);
+        _scoreCaption.Text = "Очікуємо перевірку";
+        _scoreCaption.Dock = DockStyle.Fill;
+        _scoreCaption.TextAlign = ContentAlignment.TopLeft;
+        _scoreCaption.ForeColor = Theme.Muted;
+        _scoreCaption.Font = new Font("Segoe UI", 8.5F);
+        _scoreCaption.BackColor = Theme.Card;
+        block.Controls.Add(_scoreCaption, 0, 2);
         return block;
     }
 
-    private Control CreateSystemMetrics()
+    private Control CreateMetricsBlock()
     {
         var metrics = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Card,
             ColumnCount = 2,
             RowCount = 2,
-            Margin = new Padding(6, 0, 16, 0),
-            Padding = Padding.Empty
+            Margin = new Padding(8, 0, 14, 0),
+            Padding = Padding.Empty,
+            BackColor = Theme.Card
         };
         metrics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
         metrics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -513,15 +536,16 @@ public sealed class MainForm : Form
         return metrics;
     }
 
-    private static Control CreateMetric(string caption, Label valueLabel)
+    private static Control CreateMetric(string caption, Label value)
     {
         var cell = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Margin = new Padding(8, 4, 8, 4),
-            Padding = Padding.Empty
+            Margin = new Padding(8, 5, 8, 5),
+            Padding = Padding.Empty,
+            BackColor = Theme.Card
         };
         cell.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
         cell.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -532,28 +556,31 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.BottomLeft,
             ForeColor = Theme.Subtle,
-            Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold)
+            Font = new Font("Segoe UI Semibold", 7.2F, FontStyle.Bold),
+            BackColor = Theme.Card
         }, 0, 0);
 
-        valueLabel.Text = "—";
-        valueLabel.Dock = DockStyle.Fill;
-        valueLabel.TextAlign = ContentAlignment.TopLeft;
-        valueLabel.ForeColor = Theme.Text;
-        valueLabel.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
-        valueLabel.AutoEllipsis = true;
-        cell.Controls.Add(valueLabel, 0, 1);
+        value.Text = "—";
+        value.Dock = DockStyle.Fill;
+        value.TextAlign = ContentAlignment.TopLeft;
+        value.AutoEllipsis = true;
+        value.ForeColor = Theme.Text;
+        value.Font = new Font("Segoe UI Semibold", 8.8F, FontStyle.Bold);
+        value.BackColor = Theme.Card;
+        cell.Controls.Add(value, 0, 1);
         return cell;
     }
 
-    private Control CreateSummaryActions()
+    private Control CreateActionsBlock()
     {
         var actions = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 3,
-            Margin = new Padding(12, 0, 0, 0),
-            Padding = Padding.Empty
+            Margin = new Padding(12, 3, 0, 3),
+            Padding = Padding.Empty,
+            BackColor = Theme.Card
         };
         actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
         actions.RowStyles.Add(new RowStyle(SizeType.Absolute, 10F));
@@ -583,7 +610,8 @@ public sealed class MainForm : Form
             ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 6, 0, 6)
+            Padding = new Padding(0, 6, 0, 5),
+            BackColor = Theme.Window
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
@@ -593,15 +621,17 @@ public sealed class MainForm : Form
             Text = "Рекомендації",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
-            Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold),
-            ForeColor = Theme.Text
+            ForeColor = Theme.Text,
+            Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold),
+            BackColor = Theme.Window
         }, 0, 0);
 
         _recommendationCountLabel.Text = "Очікуємо аналіз";
         _recommendationCountLabel.Dock = DockStyle.Fill;
         _recommendationCountLabel.TextAlign = ContentAlignment.MiddleRight;
-        _recommendationCountLabel.Font = new Font("Segoe UI", 9F);
         _recommendationCountLabel.ForeColor = Theme.Muted;
+        _recommendationCountLabel.Font = new Font("Segoe UI", 8.8F);
+        _recommendationCountLabel.BackColor = Theme.Window;
         header.Controls.Add(_recommendationCountLabel, 1, 0);
         return header;
     }
@@ -622,21 +652,22 @@ public sealed class MainForm : Form
             var snapshot = await _scanner.ScanAsync();
             _items = _engine.Analyze(snapshot);
 
-            var good = _items.Count(item => item.Level == RecommendationLevel.Good);
-            var score = 78 + (int)Math.Round(22D * good / Math.Max(1, _items.Count));
-            var attention = _items.Count(item => item.Level != RecommendationLevel.Good);
+            var goodCount = _items.Count(item => item.Level == RecommendationLevel.Good);
+            var attentionCount = _items.Count - goodCount;
+            var score = 78 + (int)Math.Round(22D * goodCount / Math.Max(1, _items.Count));
 
             _scoreLabel.Text = $"{score}/100";
+            _scoreCaption.Text = score >= 96 ? "Відмінний стан" : score >= 90 ? "Добрий стан" : "Є що покращити";
             _cpuValue.Text = NormalizeMetric(snapshot.Cpu);
             _gpuValue.Text = NormalizeMetric(snapshot.Gpu);
             _ramValue.Text = NormalizeMetric(snapshot.Ram);
             _windowsValue.Text = NormalizeMetric(snapshot.Windows);
-            _statusLabel.Text = attention == 0
-                ? "Система перевірена. Критичних рекомендацій немає."
-                : $"Система перевірена. Знайдено рекомендацій: {attention}.";
-            _recommendationCountLabel.Text = attention == 0
+            _statusLabel.Text = attentionCount == 0
+                ? "Перевірку завершено. Додаткові дії не потрібні."
+                : $"Перевірку завершено. Знайдено {attentionCount} безпечних рекомендацій.";
+            _recommendationCountLabel.Text = attentionCount == 0
                 ? "Усе налаштовано"
-                : $"{attention} можна застосувати";
+                : $"До застосування: {attentionCount}";
 
             foreach (var item in _items)
             {
@@ -646,11 +677,10 @@ public sealed class MainForm : Form
         catch (Exception exception)
         {
             _statusLabel.Text = "Не вдалося завершити аналіз.";
-            MessageBox.Show(
-                exception.Message,
-                "Помилка аналізу",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            if (!IsSnapshotMode())
+            {
+                MessageBox.Show(exception.Message, "Помилка аналізу", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         finally
         {
@@ -662,19 +692,19 @@ public sealed class MainForm : Form
 
     private Control CreateRecommendationCard(OptimizationItem item)
     {
+        var good = item.Level == RecommendationLevel.Good;
         var card = new RoundedPanel
         {
             Width = GetRecommendationCardWidth(),
-            Height = 118,
-            BackColor = Theme.Card,
-            BorderColor = Theme.Border,
-            BorderThickness = 1F,
+            Height = 112,
+            Margin = new Padding(0, 0, 0, 10),
+            Padding = new Padding(14, 12, 14, 12),
             Radius = 16,
-            Margin = new Padding(0, 0, 0, 12),
-            Padding = new Padding(16, 14, 16, 14)
+            BackColor = Theme.Card,
+            BorderColor = Theme.Border
         };
 
-        var layout = new TableLayoutPanel
+        var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
@@ -683,17 +713,18 @@ public sealed class MainForm : Form
             Padding = Padding.Empty,
             BackColor = Theme.Card
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 126F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 146F));
 
         var check = new CheckBox
         {
             Checked = item.Selected,
+            Enabled = !good,
             AutoSize = false,
             Dock = DockStyle.Fill,
             CheckAlign = ContentAlignment.MiddleCenter,
-            Cursor = Cursors.Hand,
+            Cursor = good ? Cursors.Default : Cursors.Hand,
             FlatStyle = FlatStyle.Flat,
             BackColor = Theme.Card
         };
@@ -714,7 +745,7 @@ public sealed class MainForm : Form
         };
         text.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
         text.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
+        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
 
         text.Controls.Add(new Label
         {
@@ -723,7 +754,8 @@ public sealed class MainForm : Form
             TextAlign = ContentAlignment.MiddleLeft,
             AutoEllipsis = true,
             ForeColor = Theme.Text,
-            Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+            Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold),
+            BackColor = Theme.Card
         }, 0, 0);
 
         text.Controls.Add(new Label
@@ -733,38 +765,70 @@ public sealed class MainForm : Form
             TextAlign = ContentAlignment.MiddleLeft,
             AutoEllipsis = true,
             ForeColor = Theme.Muted,
-            Font = new Font("Segoe UI", 9F)
+            Font = new Font("Segoe UI", 8.8F),
+            BackColor = Theme.Card
         }, 0, 1);
 
         text.Controls.Add(new Label
         {
-            Text = item.Level == RecommendationLevel.Good
-                ? $"Готово: {item.CurrentValue}"
-                : $"{item.CurrentValue}  →  {item.RecommendedValue}",
+            Text = good ? $"Готово: {item.CurrentValue}" : $"Зараз: {item.CurrentValue}   →   Рекомендовано: {item.RecommendedValue}",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             AutoEllipsis = true,
-            ForeColor = item.Level == RecommendationLevel.Good ? Theme.Good : Theme.Warning,
-            Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold)
+            ForeColor = good ? Theme.Good : Theme.Warning,
+            Font = new Font("Segoe UI Semibold", 8.2F, FontStyle.Bold),
+            BackColor = Theme.Card
         }, 0, 2);
+
+        var right = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = Theme.Card
+        };
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+        right.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
+
+        var pill = new RoundedPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(18, 0, 0, 3),
+            Padding = Padding.Empty,
+            Radius = 10,
+            BackColor = good ? Color.FromArgb(25, 68, 53) : Color.FromArgb(74, 58, 30),
+            BorderColor = Color.Transparent
+        };
+        pill.Controls.Add(new Label
+        {
+            Text = good ? "Все добре" : "Рекомендовано",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = good ? Theme.Good : Theme.Warning,
+            Font = new Font("Segoe UI Semibold", 7.8F, FontStyle.Bold),
+            BackColor = pill.BackColor
+        });
 
         var details = new Button
         {
             Text = "Докладніше",
             Dock = DockStyle.Fill,
-            Margin = new Padding(8, 20, 0, 20)
+            Margin = new Padding(18, 2, 0, 0)
         };
         ConfigureSecondaryButton(details);
-        details.Click += (_, _) => MessageBox.Show(
-            item.Details,
-            item.Title,
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        details.Click += (_, _) => MessageBox.Show(item.Details, item.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-        layout.Controls.Add(check, 0, 0);
-        layout.Controls.Add(text, 1, 0);
-        layout.Controls.Add(details, 2, 0);
-        card.Controls.Add(layout);
+        right.Controls.Add(pill, 0, 0);
+        right.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card }, 0, 1);
+        right.Controls.Add(details, 0, 2);
+
+        grid.Controls.Add(check, 0, 0);
+        grid.Controls.Add(text, 1, 0);
+        grid.Controls.Add(right, 2, 0);
+        card.Controls.Add(grid);
         return card;
     }
 
@@ -815,16 +879,11 @@ public sealed class MainForm : Form
                 MessageBoxButtons.OK,
                 failed == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
 
-            SetBusy(false);
             await ScanAsync();
         }
         catch (Exception exception)
         {
-            MessageBox.Show(
-                exception.Message,
-                "Помилка оптимізації",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            MessageBox.Show(exception.Message, "Помилка оптимізації", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -846,9 +905,10 @@ public sealed class MainForm : Form
 
     private void UpdateApplyButtonState()
     {
-        _applyButton.Enabled = !_isBusy && _items.Any(item => item.Selected);
-        _applyButton.BackColor = _applyButton.Enabled ? Theme.Accent : Theme.CardHover;
-        _applyButton.ForeColor = _applyButton.Enabled ? Theme.Window : Theme.Subtle;
+        var enabled = !_isBusy && _items.Any(item => item.Selected);
+        _applyButton.Enabled = enabled;
+        _applyButton.BackColor = enabled ? Theme.Accent : Theme.CardHover;
+        _applyButton.ForeColor = enabled ? Theme.Window : Theme.Subtle;
     }
 
     private void ResizeRecommendationCards()
@@ -870,7 +930,7 @@ public sealed class MainForm : Form
         var scrollbarAllowance = _cards.VerticalScroll.Visible
             ? SystemInformation.VerticalScrollBarWidth + 8
             : 8;
-        return Math.Max(520, _cards.ClientSize.Width - scrollbarAllowance);
+        return Math.Max(500, _cards.ClientSize.Width - scrollbarAllowance);
     }
 
     private static string NormalizeMetric(string value)
@@ -883,15 +943,15 @@ public sealed class MainForm : Form
         var button = new Button
         {
             Text = text,
-            Width = 192,
-            Height = 46,
+            Width = 180,
+            Height = 44,
             FlatStyle = FlatStyle.Flat,
             TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(16, 0, 8, 0),
+            Padding = new Padding(14, 0, 8, 0),
             Margin = new Padding(0, 0, 0, 8),
             BackColor = active ? Theme.AccentSoft : Theme.Sidebar,
             ForeColor = active ? Theme.Accent : Theme.Muted,
-            Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+            Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
             Cursor = Cursors.Hand,
             TabStop = false
         };
@@ -902,11 +962,6 @@ public sealed class MainForm : Form
         return button;
     }
 
-    private static Button CreateNavButton(string text, bool active, Func<Task> action)
-    {
-        return CreateNavButton(text, active, () => _ = action());
-    }
-
     private static void ConfigurePrimaryButton(Button button)
     {
         button.FlatStyle = FlatStyle.Flat;
@@ -915,7 +970,7 @@ public sealed class MainForm : Form
         button.FlatAppearance.MouseDownBackColor = Theme.AccentPressed;
         button.BackColor = Theme.Accent;
         button.ForeColor = Theme.Window;
-        button.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+        button.Font = new Font("Segoe UI Semibold", 9.2F, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
         button.TabStop = false;
     }
@@ -929,26 +984,27 @@ public sealed class MainForm : Form
         button.FlatAppearance.MouseDownBackColor = Theme.Surface;
         button.BackColor = Theme.Surface;
         button.ForeColor = Theme.Text;
-        button.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+        button.Font = new Font("Segoe UI Semibold", 8.7F, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
         button.TabStop = false;
     }
 
-    private static Button CreateTitleButton(string text, Action action, bool isClose = false)
+    private static Button CreateWindowButton(string text, Action action, bool close = false)
     {
-        var button = new Button { Text = text };
-        ConfigureTitleButton(button, action, isClose);
+        var button = new Button();
+        ConfigureWindowButton(button, text, action, close);
         return button;
     }
 
-    private static void ConfigureTitleButton(Button button, Action action, bool isClose = false)
+    private static void ConfigureWindowButton(Button button, string text, Action action, bool close = false)
     {
+        button.Text = text;
         button.Dock = DockStyle.Fill;
         button.Margin = Padding.Empty;
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = 0;
-        button.FlatAppearance.MouseOverBackColor = isClose ? Color.FromArgb(196, 43, 58) : Theme.CardHover;
-        button.FlatAppearance.MouseDownBackColor = isClose ? Color.FromArgb(158, 31, 44) : Theme.Surface;
+        button.FlatAppearance.MouseOverBackColor = close ? Color.FromArgb(196, 43, 58) : Theme.CardHover;
+        button.FlatAppearance.MouseDownBackColor = close ? Color.FromArgb(158, 31, 44) : Theme.Surface;
         button.BackColor = Theme.Window;
         button.ForeColor = Theme.Muted;
         button.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
@@ -977,12 +1033,13 @@ public sealed class MainForm : Form
         }
         catch (Exception exception)
         {
-            MessageBox.Show(
-                exception.Message,
-                "Не вдалося відкрити резервні копії",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+            MessageBox.Show(exception.Message, "Не вдалося відкрити резервні копії", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
+    }
+
+    private static bool IsSnapshotMode()
+    {
+        return string.Equals(Environment.GetEnvironmentVariable("TIHIY_UI_SNAPSHOT"), "1", StringComparison.Ordinal);
     }
 
     protected override void WndProc(ref Message message)
@@ -990,13 +1047,11 @@ public sealed class MainForm : Form
         if (message.Msg == WmNcHitTest && WindowState == FormWindowState.Normal)
         {
             base.WndProc(ref message);
-            if ((int)message.Result != 0)
-            {
-                return;
-            }
 
             var raw = message.LParam.ToInt64();
-            var screenPoint = new Point(unchecked((short)(raw & 0xFFFF)), unchecked((short)((raw >> 16) & 0xFFFF)));
+            var screenPoint = new Point(
+                unchecked((short)(raw & 0xFFFF)),
+                unchecked((short)((raw >> 16) & 0xFFFF)));
             var point = PointToClient(screenPoint);
             const int grip = 8;
 
@@ -1005,16 +1060,14 @@ public sealed class MainForm : Form
             var top = point.Y <= grip;
             var bottom = point.Y >= ClientSize.Height - grip;
 
-            message.Result = (IntPtr)(
-                top && left ? HtTopLeft :
-                top && right ? HtTopRight :
-                bottom && left ? HtBottomLeft :
-                bottom && right ? HtBottomRight :
-                left ? HtLeft :
-                right ? HtRight :
-                top ? HtTop :
-                bottom ? HtBottom :
-                0);
+            if (top && left) message.Result = (IntPtr)HtTopLeft;
+            else if (top && right) message.Result = (IntPtr)HtTopRight;
+            else if (bottom && left) message.Result = (IntPtr)HtBottomLeft;
+            else if (bottom && right) message.Result = (IntPtr)HtBottomRight;
+            else if (left) message.Result = (IntPtr)HtLeft;
+            else if (right) message.Result = (IntPtr)HtRight;
+            else if (top) message.Result = (IntPtr)HtTop;
+            else if (bottom) message.Result = (IntPtr)HtBottom;
             return;
         }
 
