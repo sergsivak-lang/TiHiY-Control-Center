@@ -20,7 +20,7 @@ jobs:
         run: dotnet build TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln -c Release --no-restore
       - name: Publish single EXE
         run: dotnet publish TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/TiHiY.SystemOptimizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/TiHiY-System-Optimizer
-      - name: Capture real UI at supported window sizes
+      - name: Capture and verify real UI pages
         shell: pwsh
         env:
           TIHIY_UI_SNAPSHOT: "1"
@@ -29,26 +29,30 @@ jobs:
           $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
           if (!$dll) { throw "Built application DLL was not found" }
 
-          $sizes = @(
-            @{ W = 1040; H = 700; Name = "optimizer-1040x700.png" },
-            @{ W = 1280; H = 800; Name = "optimizer-1280x800.png" },
-            @{ W = 1600; H = 900; Name = "optimizer-1600x900.png" }
+          $shots = @(
+            @{ W = 1040; H = 700; Page = "Overview"; Name = "overview-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Overview"; Name = "overview-1280x800.png" },
+            @{ W = 1600; H = 900; Page = "Overview"; Name = "overview-1600x900.png" },
+            @{ W = 1280; H = 800; Page = "Applications"; Name = "applications-1280x800.png" },
+            @{ W = 1280; H = 800; Page = "StarCitizen"; Name = "star-citizen-1280x800.png" },
+            @{ W = 1280; H = 800; Page = "Restore"; Name = "restore-1280x800.png" }
           )
 
-          foreach ($size in $sizes) {
-            $target = Join-Path "artifacts/ui-preview" $size.Name
-            dotnet $dll --snapshot $target $size.W $size.H
+          foreach ($shot in $shots) {
+            $target = Join-Path "artifacts/ui-preview" $shot.Name
+            dotnet $dll --snapshot $target $shot.W $shot.H $shot.Page
             if (!(Test-Path $target)) { throw "UI snapshot was not created: $target" }
+            if ((Get-Item $target).Length -lt 10000) { throw "UI snapshot is unexpectedly small: $target" }
           }
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-ui-preview
+          name: TiHiY-System-Optimizer-v0.2-ui-preview
           path: artifacts/ui-preview/
           if-no-files-found: error
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-v0.1-win-x64
+          name: TiHiY-System-Optimizer-v0.2-win-x64
           path: artifacts/TiHiY-System-Optimizer/
           if-no-files-found: error
