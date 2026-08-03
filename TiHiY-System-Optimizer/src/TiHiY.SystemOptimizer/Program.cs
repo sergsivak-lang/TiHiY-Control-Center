@@ -1,3 +1,4 @@
+using System.Reflection;
 using TiHiY.SystemOptimizer.UI;
 
 namespace TiHiY.SystemOptimizer;
@@ -29,6 +30,7 @@ internal static class Program
         var outputPath = Path.GetFullPath(args[1]);
         var width = args.Length >= 3 && int.TryParse(args[2], out var parsedWidth) ? Math.Max(1040, parsedWidth) : 1280;
         var height = args.Length >= 4 && int.TryParse(args[3], out var parsedHeight) ? Math.Max(700, parsedHeight) : 800;
+        var page = args.Length >= 5 ? args[4] : "Overview";
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? AppContext.BaseDirectory);
 
@@ -45,6 +47,7 @@ internal static class Program
         timer.Tick += (_, _) =>
         {
             timer.Stop();
+            SelectSnapshotPage(form, page);
             form.PerformLayout();
             Application.DoEvents();
 
@@ -60,5 +63,25 @@ internal static class Program
         timer.Dispose();
 
         return completed || File.Exists(outputPath);
+    }
+
+    private static void SelectSnapshotPage(MainForm form, string page)
+    {
+        try
+        {
+            var pageType = typeof(MainForm).GetNestedType("PageKind", BindingFlags.NonPublic);
+            var showPage = typeof(MainForm).GetMethod("ShowPage", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (pageType is null || showPage is null)
+            {
+                return;
+            }
+
+            var value = Enum.Parse(pageType, page, ignoreCase: true);
+            showPage.Invoke(form, [value]);
+        }
+        catch
+        {
+            // Overview remains selected when an unknown page name is supplied.
+        }
     }
 }
