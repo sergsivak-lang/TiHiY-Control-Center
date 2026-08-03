@@ -4,6 +4,8 @@ on:
   push:
     branches: [ "feature/tihiy-system-optimizer-v0.1" ]
     paths: [ "TiHiY-System-Optimizer/**", ".github/workflows/build-optimizer.yml" ]
+  pull_request:
+    paths: [ "TiHiY-System-Optimizer/**", ".github/workflows/build-optimizer.yml" ]
 jobs:
   build:
     runs-on: windows-latest
