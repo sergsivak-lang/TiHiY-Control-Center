@@ -26,7 +26,7 @@ jobs:
           TIHIY_UI_SNAPSHOT: "1"
         run: |
           New-Item -ItemType Directory -Force artifacts/ui-preview | Out-Null
-          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY.SystemOptimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
           if (!$dll) { throw "Built application DLL was not found" }
 
           $sizes = @(
