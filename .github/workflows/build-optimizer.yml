@@ -1,0 +1,25 @@
+name: Build TiHiY System Optimizer
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "feature/tihiy-system-optimizer-v0.1" ]
+    paths: [ "TiHiY-System-Optimizer/**", ".github/workflows/build-optimizer.yml" ]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln
+      - name: Build
+        run: dotnet build TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln -c Release --no-restore
+      - name: Publish single EXE
+        run: dotnet publish TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/TiHiY.SystemOptimizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/TiHiY-System-Optimizer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TiHiY-System-Optimizer-v0.1-win-x64
+          path: artifacts/TiHiY-System-Optimizer/
+          if-no-files-found: error
