@@ -20,27 +20,34 @@ jobs:
         run: dotnet build TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln -c Release --no-restore
       - name: Publish single EXE
         run: dotnet publish TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/TiHiY.SystemOptimizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/TiHiY-System-Optimizer
-      - name: UI snapshot 1280x800
+      - name: Capture real UI at supported window sizes
         shell: pwsh
+        env:
+          TIHIY_UI_SNAPSHOT: "1"
         run: |
           New-Item -ItemType Directory -Force artifacts/ui-preview | Out-Null
-          $exe = (Get-ChildItem "artifacts/TiHiY-System-Optimizer" -Filter "*.exe" | Select-Object -First 1).FullName
-          if (!$exe) { throw "Published EXE was not found" }
-          & $exe --snapshot "artifacts/ui-preview/optimizer-1280x800.png" 1280 800
-          if (!(Test-Path "artifacts/ui-preview/optimizer-1280x800.png")) { throw "UI snapshot was not created" }
-      - name: UI snapshot 1600x900
-        shell: pwsh
-        run: |
-          $exe = (Get-ChildItem "artifacts/TiHiY-System-Optimizer" -Filter "*.exe" | Select-Object -First 1).FullName
-          & $exe --snapshot "artifacts/ui-preview/optimizer-1600x900.png" 1600 900
-          if (!(Test-Path "artifacts/ui-preview/optimizer-1600x900.png")) { throw "UI snapshot was not created" }
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY.SystemOptimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+
+          $sizes = @(
+            @{ W = 1040; H = 700; Name = "optimizer-1040x700.png" },
+            @{ W = 1280; H = 800; Name = "optimizer-1280x800.png" },
+            @{ W = 1600; H = 900; Name = "optimizer-1600x900.png" }
+          )
+
+          foreach ($size in $sizes) {
+            $target = Join-Path "artifacts/ui-preview" $size.Name
+            dotnet $dll --snapshot $target $size.W $size.H
+            if (!(Test-Path $target)) { throw "UI snapshot was not created: $target" }
+          }
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
         with:
           name: TiHiY-System-Optimizer-ui-preview
           path: artifacts/ui-preview/
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
         with:
           name: TiHiY-System-Optimizer-v0.1-win-x64
           path: artifacts/TiHiY-System-Optimizer/
