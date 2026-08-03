@@ -18,6 +18,7 @@ public sealed class MainForm : Form
     private const int HtBottom = 15;
     private const int HtBottomLeft = 16;
     private const int HtBottomRight = 17;
+    private const int RecommendationRowHeight = 122;
 
     private readonly SystemScanner _scanner = new();
     private readonly RecommendationEngine _engine = new();
@@ -26,6 +27,8 @@ public sealed class MainForm : Form
 
     private readonly Panel _recommendationsViewport = new();
     private readonly TableLayoutPanel _cards = new();
+    private readonly Panel _scrollTrack = new();
+    private readonly Panel _scrollThumb = new();
     private readonly Label _statusLabel = new();
     private readonly Label _scoreLabel = new();
     private readonly Label _scoreCaption = new();
@@ -40,6 +43,7 @@ public sealed class MainForm : Form
 
     private IReadOnlyList<OptimizationItem> _items = Array.Empty<OptimizationItem>();
     private bool _isBusy;
+    private int _recommendationScrollOffset;
 
     public MainForm()
     {
@@ -69,7 +73,6 @@ public sealed class MainForm : Form
     private void BuildUi()
     {
         SuspendLayout();
-
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -84,7 +87,6 @@ public sealed class MainForm : Form
         root.Controls.Add(CreateTitleBar(), 0, 0);
         root.Controls.Add(CreateBody(), 0, 1);
         Controls.Add(root);
-
         ResumeLayout(true);
     }
 
@@ -111,13 +113,10 @@ public sealed class MainForm : Form
         windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
         windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
         windowButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
-
-        var minimize = CreateWindowButton("—", () => WindowState = FormWindowState.Minimized);
+        windowButtons.Controls.Add(CreateWindowButton("—", () => WindowState = FormWindowState.Minimized), 0, 0);
         ConfigureWindowButton(_maximizeButton, "□", ToggleMaximize);
-        var close = CreateWindowButton("×", Close, true);
-        windowButtons.Controls.Add(minimize, 0, 0);
         windowButtons.Controls.Add(_maximizeButton, 1, 0);
-        windowButtons.Controls.Add(close, 2, 0);
+        windowButtons.Controls.Add(CreateWindowButton("×", Close, true), 2, 0);
         bar.Controls.Add(windowButtons);
 
         bar.Paint += (_, e) =>
@@ -130,17 +129,15 @@ public sealed class MainForm : Form
             e.Graphics.DrawString("TiHiY System Optimizer", titleFont, textBrush, 42, 12);
         };
 
-        MouseEventHandler drag = (_, e) =>
+        bar.MouseDown += (_, e) =>
         {
             if (e.Button != MouseButtons.Left)
             {
                 return;
             }
-
             ReleaseCapture();
             SendMessage(Handle, WmNcLButtonDown, HtCaption, 0);
         };
-        bar.MouseDown += drag;
         bar.DoubleClick += (_, _) => ToggleMaximize();
         return bar;
     }
@@ -169,10 +166,9 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Padding(18, 18, 18, 18),
+            Padding = new Padding(18),
             BackColor = Theme.Sidebar
         };
-
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -239,7 +235,6 @@ public sealed class MainForm : Form
             BackColor = Theme.Surface
         });
         grid.Controls.Add(safe, 0, 3);
-
         sidebar.Controls.Add(grid);
         return sidebar;
     }
@@ -305,7 +300,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7F, FontStyle.Bold),
             BackColor = Theme.Sidebar
         }, 0, 1);
-
         brand.Controls.Add(logo, 0, 0);
         brand.Controls.Add(text, 1, 0);
         return brand;
@@ -320,7 +314,6 @@ public sealed class MainForm : Form
             Padding = new Padding(26, 20, 26, 22),
             BackColor = Theme.Window
         };
-
         var dashboard = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -341,24 +334,37 @@ public sealed class MainForm : Form
         _recommendationsViewport.Dock = DockStyle.Fill;
         _recommendationsViewport.Margin = Padding.Empty;
         _recommendationsViewport.Padding = Padding.Empty;
-        _recommendationsViewport.AutoScroll = true;
+        _recommendationsViewport.AutoScroll = false;
         _recommendationsViewport.BackColor = Theme.Window;
-        _recommendationsViewport.HorizontalScroll.Enabled = false;
-        _recommendationsViewport.HorizontalScroll.Visible = false;
         _recommendationsViewport.Resize += (_, _) => UpdateRecommendationViewport();
+        _recommendationsViewport.MouseWheel += RecommendationMouseWheel;
 
-        _cards.Dock = DockStyle.Top;
-        _cards.AutoSize = true;
-        _cards.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _cards.AutoSize = false;
         _cards.ColumnCount = 1;
         _cards.RowCount = 0;
         _cards.Margin = Padding.Empty;
         _cards.Padding = Padding.Empty;
         _cards.BackColor = Theme.Window;
         _cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        _recommendationsViewport.Controls.Add(_cards);
-        dashboard.Controls.Add(_recommendationsViewport, 0, 3);
+        _cards.Location = Point.Empty;
+        _cards.MouseWheel += RecommendationMouseWheel;
 
+        _scrollTrack.Dock = DockStyle.Right;
+        _scrollTrack.Width = 7;
+        _scrollTrack.Margin = Padding.Empty;
+        _scrollTrack.Padding = Padding.Empty;
+        _scrollTrack.BackColor = Theme.Surface;
+        _scrollTrack.Visible = false;
+        _scrollThumb.Width = 7;
+        _scrollThumb.Height = 42;
+        _scrollThumb.Left = 0;
+        _scrollThumb.Top = 0;
+        _scrollThumb.BackColor = Theme.Subtle;
+        _scrollTrack.Controls.Add(_scrollThumb);
+
+        _recommendationsViewport.Controls.Add(_cards);
+        _recommendationsViewport.Controls.Add(_scrollTrack);
+        dashboard.Controls.Add(_recommendationsViewport, 0, 3);
         host.Controls.Add(dashboard);
         return host;
     }
@@ -385,7 +391,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 22F, FontStyle.Bold),
             BackColor = Theme.Window
         }, 0, 0);
-
         _statusLabel.Text = "Підготовка до аналізу…";
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.TopLeft;
@@ -408,7 +413,6 @@ public sealed class MainForm : Form
             BackColor = Theme.Card,
             BorderColor = Theme.Border
         };
-
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -451,7 +455,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold),
             BackColor = Theme.Card
         }, 0, 0);
-
         _scoreLabel.Text = "—";
         _scoreLabel.Dock = DockStyle.Fill;
         _scoreLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -459,7 +462,6 @@ public sealed class MainForm : Form
         _scoreLabel.Font = new Font("Segoe UI Semibold", 27F, FontStyle.Bold);
         _scoreLabel.BackColor = Theme.Card;
         block.Controls.Add(_scoreLabel, 0, 1);
-
         _scoreCaption.Text = "Очікуємо перевірку";
         _scoreCaption.Dock = DockStyle.Fill;
         _scoreCaption.TextAlign = ContentAlignment.TopLeft;
@@ -514,7 +516,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.2F, FontStyle.Bold),
             BackColor = Theme.Card
         }, 0, 0);
-
         value.Text = "—";
         value.Dock = DockStyle.Fill;
         value.TextAlign = ContentAlignment.TopLeft;
@@ -540,13 +541,11 @@ public sealed class MainForm : Form
         actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
         actions.RowStyles.Add(new RowStyle(SizeType.Absolute, 10F));
         actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-
         _applyButton.Text = "Оптимізувати вибране";
         ConfigurePrimaryButton(_applyButton);
         _applyButton.Dock = DockStyle.Fill;
         _applyButton.Enabled = false;
         _applyButton.Click += async (_, _) => await ApplyAsync();
-
         _scanButton.Text = "Повторити аналіз";
         ConfigureSecondaryButton(_scanButton);
         _scanButton.Dock = DockStyle.Fill;
@@ -578,7 +577,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold),
             BackColor = Theme.Window
         }, 0, 0);
-
         _recommendationCountLabel.Text = "Очікуємо аналіз";
         _recommendationCountLabel.Dock = DockStyle.Fill;
         _recommendationCountLabel.TextAlign = ContentAlignment.MiddleRight;
@@ -595,8 +593,8 @@ public sealed class MainForm : Form
         {
             return;
         }
-
         SetBusy(true, "Аналізуємо Windows та обладнання…");
+        _recommendationScrollOffset = 0;
         _cards.SuspendLayout();
         _cards.Controls.Clear();
         _cards.RowStyles.Clear();
@@ -609,7 +607,6 @@ public sealed class MainForm : Form
             var goodCount = _items.Count(item => item.Level == RecommendationLevel.Good);
             var attentionCount = _items.Count - goodCount;
             var score = 78 + (int)Math.Round(22D * goodCount / Math.Max(1, _items.Count));
-
             _scoreLabel.Text = $"{score}/100";
             _scoreCaption.Text = score >= 96 ? "Відмінний стан" : score >= 90 ? "Добрий стан" : "Є що покращити";
             _cpuValue.Text = NormalizeMetric(snapshot.Cpu);
@@ -625,9 +622,12 @@ public sealed class MainForm : Form
             foreach (var item in _items)
             {
                 _cards.RowCount++;
-                _cards.RowStyles.Add(new RowStyle(SizeType.Absolute, 112F));
-                _cards.Controls.Add(CreateRecommendationCard(item), 0, row++);
+                _cards.RowStyles.Add(new RowStyle(SizeType.Absolute, RecommendationRowHeight));
+                var card = CreateRecommendationCard(item);
+                AttachRecommendationWheel(card);
+                _cards.Controls.Add(card, 0, row++);
             }
+            _cards.Height = _cards.RowCount * RecommendationRowHeight;
         }
         catch (Exception exception)
         {
@@ -657,7 +657,6 @@ public sealed class MainForm : Form
             BackColor = Theme.Card,
             BorderColor = Theme.Border
         };
-
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -697,7 +696,7 @@ public sealed class MainForm : Form
             Padding = Padding.Empty,
             BackColor = Theme.Card
         };
-        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
         text.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         text.Controls.Add(new Label
         {
@@ -729,10 +728,9 @@ public sealed class MainForm : Form
             Padding = Padding.Empty,
             BackColor = Theme.Card
         };
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
         right.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
         var pill = new RoundedPanel
         {
             Dock = DockStyle.Fill,
@@ -751,7 +749,6 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.6F, FontStyle.Bold),
             BackColor = pill.BackColor
         });
-
         var details = new Button
         {
             Text = "Докладніше",
@@ -764,7 +761,6 @@ public sealed class MainForm : Form
             item.Title,
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
-
         right.Controls.Add(pill, 0, 0);
         right.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card }, 0, 1);
         right.Controls.Add(details, 0, 2);
@@ -775,19 +771,75 @@ public sealed class MainForm : Form
         return card;
     }
 
+    private void AttachRecommendationWheel(Control control)
+    {
+        control.MouseWheel += RecommendationMouseWheel;
+        foreach (Control child in control.Controls)
+        {
+            AttachRecommendationWheel(child);
+        }
+    }
+
+    private void RecommendationMouseWheel(object? sender, MouseEventArgs e)
+    {
+        if (!_scrollTrack.Visible)
+        {
+            return;
+        }
+        var direction = e.Delta > 0 ? -1 : 1;
+        SetRecommendationScroll(_recommendationScrollOffset + direction * 76);
+    }
+
+    private void SetRecommendationScroll(int offset)
+    {
+        var max = Math.Max(0, _cards.Height - _recommendationsViewport.ClientSize.Height);
+        _recommendationScrollOffset = Math.Clamp(offset, 0, max);
+        _cards.Top = -_recommendationScrollOffset;
+        UpdateScrollThumb(max);
+    }
+
+    private void UpdateRecommendationViewport()
+    {
+        if (_recommendationsViewport.IsDisposed || _cards.IsDisposed)
+        {
+            return;
+        }
+        var viewWidth = Math.Max(300, _recommendationsViewport.ClientSize.Width);
+        _cards.Width = Math.Max(280, viewWidth - 15);
+        var max = Math.Max(0, _cards.Height - _recommendationsViewport.ClientSize.Height);
+        _recommendationScrollOffset = Math.Clamp(_recommendationScrollOffset, 0, max);
+        _cards.Left = 0;
+        _cards.Top = -_recommendationScrollOffset;
+        _scrollTrack.Visible = max > 0;
+        _scrollTrack.BringToFront();
+        UpdateScrollThumb(max);
+    }
+
+    private void UpdateScrollThumb(int max)
+    {
+        if (!_scrollTrack.Visible || _scrollTrack.Height <= 0 || _cards.Height <= 0)
+        {
+            return;
+        }
+        var viewportHeight = Math.Max(1, _recommendationsViewport.ClientSize.Height);
+        var thumbHeight = Math.Max(34, (int)Math.Round(_scrollTrack.Height * Math.Min(1D, viewportHeight / (double)_cards.Height)));
+        thumbHeight = Math.Min(_scrollTrack.Height, thumbHeight);
+        _scrollThumb.Height = thumbHeight;
+        var travel = Math.Max(0, _scrollTrack.Height - thumbHeight);
+        _scrollThumb.Top = max == 0 ? 0 : (int)Math.Round(travel * (_recommendationScrollOffset / (double)max));
+    }
+
     private async Task ApplyAsync()
     {
         if (_isBusy)
         {
             return;
         }
-
         var selected = _items.Where(item => item.Selected).ToArray();
         if (selected.Length == 0)
         {
             return;
         }
-
         var confirmation = MessageBox.Show(
             $"Буде застосовано змін: {selected.Length}.\n\nПеред початком програма створить резервну копію. Продовжити?",
             "Підтвердження оптимізації",
@@ -797,7 +849,6 @@ public sealed class MainForm : Form
         {
             return;
         }
-
         SetBusy(true, "Створюємо резервну копію…");
         try
         {
@@ -806,7 +857,6 @@ public sealed class MainForm : Form
                 selected,
                 new Progress<string>(message => _statusLabel.Text = $"Застосовуємо: {message}…"));
             await File.WriteAllLinesAsync(Path.Combine(folder, "apply.log"), log);
-
             var failed = log.Count(line => line.StartsWith("ПОМИЛКА", StringComparison.OrdinalIgnoreCase));
             var restartText = selected.Any(item => item.RequiresRestart)
                 ? "\n\nДля завершення змін перезавантажте ПК."
@@ -847,19 +897,6 @@ public sealed class MainForm : Form
         _applyButton.Enabled = enabled;
         _applyButton.BackColor = enabled ? Theme.Accent : Theme.CardHover;
         _applyButton.ForeColor = enabled ? Theme.Window : Theme.Subtle;
-    }
-
-    private void UpdateRecommendationViewport()
-    {
-        if (_recommendationsViewport.IsDisposed || _cards.IsDisposed)
-        {
-            return;
-        }
-
-        _recommendationsViewport.HorizontalScroll.Enabled = false;
-        _recommendationsViewport.HorizontalScroll.Visible = false;
-        var scrollbar = _recommendationsViewport.VerticalScroll.Visible ? SystemInformation.VerticalScrollBarWidth : 0;
-        _cards.Width = Math.Max(300, _recommendationsViewport.ClientSize.Width - scrollbar - 4);
     }
 
     private static string NormalizeMetric(string value)
@@ -982,12 +1019,10 @@ public sealed class MainForm : Form
                 unchecked((short)((raw >> 16) & 0xFFFF)));
             var point = PointToClient(screenPoint);
             const int grip = 8;
-
             var left = point.X <= grip;
             var right = point.X >= ClientSize.Width - grip;
             var top = point.Y <= grip;
             var bottom = point.Y >= ClientSize.Height - grip;
-
             if (top && left) message.Result = (IntPtr)HtTopLeft;
             else if (top && right) message.Result = (IntPtr)HtTopRight;
             else if (bottom && left) message.Result = (IntPtr)HtBottomLeft;
@@ -998,7 +1033,6 @@ public sealed class MainForm : Form
             else if (bottom) message.Result = (IntPtr)HtBottom;
             return;
         }
-
         base.WndProc(ref message);
     }
 
