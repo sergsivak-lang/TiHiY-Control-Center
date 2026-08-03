@@ -18,7 +18,7 @@ public sealed class MainForm : Form
     private const int HtBottom = 15;
     private const int HtBottomLeft = 16;
     private const int HtBottomRight = 17;
-    private const int RecommendationRowHeight = 122;
+    private const int RecommendationRowHeight = 156;
 
     private readonly SystemScanner _scanner = new();
     private readonly RecommendationEngine _engine = new();
@@ -73,6 +73,7 @@ public sealed class MainForm : Form
     private void BuildUi()
     {
         SuspendLayout();
+
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -87,6 +88,7 @@ public sealed class MainForm : Form
         root.Controls.Add(CreateTitleBar(), 0, 0);
         root.Controls.Add(CreateBody(), 0, 1);
         Controls.Add(root);
+
         ResumeLayout(true);
     }
 
@@ -135,6 +137,7 @@ public sealed class MainForm : Form
             {
                 return;
             }
+
             ReleaseCapture();
             SendMessage(Handle, WmNcLButtonDown, HtCaption, 0);
         };
@@ -169,6 +172,7 @@ public sealed class MainForm : Form
             Padding = new Padding(18),
             BackColor = Theme.Sidebar
         };
+
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -181,7 +185,7 @@ public sealed class MainForm : Form
         grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 82F));
         grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
         grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 116F));
         grid.Controls.Add(CreateBrand(), 0, 0);
         grid.Controls.Add(new Label
         {
@@ -203,7 +207,7 @@ public sealed class MainForm : Form
             Padding = Padding.Empty,
             BackColor = Theme.Sidebar
         };
-        nav.Controls.Add(CreateNavButton("Огляд системи", true, () => { _ = ScanAsync(); }));
+        nav.Controls.Add(CreateNavButton("Огляд системи", true, () => { }));
         nav.Controls.Add(CreateNavButton("Повторити аналіз", false, () => { _ = ScanAsync(); }));
         nav.Controls.Add(CreateNavButton("Резервні копії", false, OpenBackupsFolder));
         nav.Resize += (_, _) =>
@@ -227,11 +231,11 @@ public sealed class MainForm : Form
         };
         safe.Controls.Add(new Label
         {
-            Text = "БЕЗПЕЧНИЙ РЕЖИМ\nЗміни — лише після вашого підтвердження",
+            Text = "ЯК ЦЕ ПРАЦЮЄ\n1. Аналізуємо ПК\n2. Пояснюємо кожну зміну\n3. Застосовуємо лише після підтвердження",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = Theme.Muted,
-            Font = new Font("Segoe UI", 8F),
+            Font = new Font("Segoe UI", 7.7F),
             BackColor = Theme.Surface
         });
         grid.Controls.Add(safe, 0, 3);
@@ -311,9 +315,10 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Padding(26, 20, 26, 22),
+            Padding = new Padding(26, 18, 26, 22),
             BackColor = Theme.Window
         };
+
         var dashboard = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -323,9 +328,9 @@ public sealed class MainForm : Form
             Padding = Padding.Empty,
             BackColor = Theme.Window
         };
-        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 66F));
+        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 82F));
         dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 184F));
-        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        dashboard.RowStyles.Add(new RowStyle(SizeType.Absolute, 62F));
         dashboard.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         dashboard.Controls.Add(CreateHeader(), 0, 0);
         dashboard.Controls.Add(CreateSummaryCard(), 0, 1);
@@ -355,6 +360,7 @@ public sealed class MainForm : Form
         _scrollTrack.Padding = Padding.Empty;
         _scrollTrack.BackColor = Theme.Surface;
         _scrollTrack.Visible = false;
+
         _scrollThumb.Width = 7;
         _scrollThumb.Height = 42;
         _scrollThumb.Left = 0;
@@ -375,13 +381,14 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             BackColor = Theme.Window
         };
-        header.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
-        header.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         header.Controls.Add(new Label
         {
             Text = "Стан вашого ПК",
@@ -391,14 +398,25 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 22F, FontStyle.Bold),
             BackColor = Theme.Window
         }, 0, 0);
+        header.Controls.Add(new Label
+        {
+            Text = "TiHiY перевіряє Windows і пояснює простими словами, що саме можна змінити та навіщо.",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            ForeColor = Theme.Muted,
+            Font = new Font("Segoe UI", 9F),
+            AutoEllipsis = true,
+            BackColor = Theme.Window
+        }, 0, 1);
+
         _statusLabel.Text = "Підготовка до аналізу…";
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.TextAlign = ContentAlignment.TopLeft;
-        _statusLabel.ForeColor = Theme.Muted;
-        _statusLabel.Font = new Font("Segoe UI", 9.5F);
+        _statusLabel.ForeColor = Theme.Subtle;
+        _statusLabel.Font = new Font("Segoe UI", 8.6F);
         _statusLabel.AutoEllipsis = true;
         _statusLabel.BackColor = Theme.Window;
-        header.Controls.Add(_statusLabel, 0, 1);
+        header.Controls.Add(_statusLabel, 0, 2);
         return header;
     }
 
@@ -413,6 +431,7 @@ public sealed class MainForm : Form
             BackColor = Theme.Card,
             BorderColor = Theme.Border
         };
+
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -455,6 +474,7 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold),
             BackColor = Theme.Card
         }, 0, 0);
+
         _scoreLabel.Text = "—";
         _scoreLabel.Dock = DockStyle.Fill;
         _scoreLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -462,6 +482,7 @@ public sealed class MainForm : Form
         _scoreLabel.Font = new Font("Segoe UI Semibold", 27F, FontStyle.Bold);
         _scoreLabel.BackColor = Theme.Card;
         block.Controls.Add(_scoreLabel, 0, 1);
+
         _scoreCaption.Text = "Очікуємо перевірку";
         _scoreCaption.Dock = DockStyle.Fill;
         _scoreCaption.TextAlign = ContentAlignment.TopLeft;
@@ -516,6 +537,7 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.2F, FontStyle.Bold),
             BackColor = Theme.Card
         }, 0, 0);
+
         value.Text = "—";
         value.Dock = DockStyle.Fill;
         value.TextAlign = ContentAlignment.TopLeft;
@@ -541,15 +563,18 @@ public sealed class MainForm : Form
         actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
         actions.RowStyles.Add(new RowStyle(SizeType.Absolute, 10F));
         actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-        _applyButton.Text = "Оптимізувати вибране";
+
+        _applyButton.Text = "Застосувати вибране";
         ConfigurePrimaryButton(_applyButton);
         _applyButton.Dock = DockStyle.Fill;
         _applyButton.Enabled = false;
         _applyButton.Click += async (_, _) => await ApplyAsync();
+
         _scanButton.Text = "Повторити аналіз";
         ConfigureSecondaryButton(_scanButton);
         _scanButton.Dock = DockStyle.Fill;
         _scanButton.Click += async (_, _) => await ScanAsync();
+
         actions.Controls.Add(_applyButton, 0, 0);
         actions.Controls.Add(_scanButton, 0, 2);
         return actions;
@@ -561,29 +586,43 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 1,
+            RowCount = 2,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 6, 0, 5),
+            Padding = new Padding(0, 5, 0, 5),
             BackColor = Theme.Window
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         header.Controls.Add(new Label
         {
-            Text = "Рекомендації",
+            Text = "Що можна покращити",
             Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft,
+            TextAlign = ContentAlignment.BottomLeft,
             ForeColor = Theme.Text,
             Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold),
             BackColor = Theme.Window
         }, 0, 0);
+
         _recommendationCountLabel.Text = "Очікуємо аналіз";
         _recommendationCountLabel.Dock = DockStyle.Fill;
-        _recommendationCountLabel.TextAlign = ContentAlignment.MiddleRight;
+        _recommendationCountLabel.TextAlign = ContentAlignment.BottomRight;
         _recommendationCountLabel.ForeColor = Theme.Muted;
         _recommendationCountLabel.Font = new Font("Segoe UI", 8.8F);
         _recommendationCountLabel.BackColor = Theme.Window;
         header.Controls.Add(_recommendationCountLabel, 1, 0);
+        header.Controls.Add(new Label
+        {
+            Text = "Галочка означає, що ця зміна буде застосована після вашого підтвердження.",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.TopLeft,
+            ForeColor = Theme.Subtle,
+            Font = new Font("Segoe UI", 8F),
+            AutoEllipsis = true,
+            BackColor = Theme.Window
+        }, 0, 1);
+        header.SetColumnSpan(header.GetControlFromPosition(0, 1)!, 2);
         return header;
     }
 
@@ -593,6 +632,7 @@ public sealed class MainForm : Form
         {
             return;
         }
+
         SetBusy(true, "Аналізуємо Windows та обладнання…");
         _recommendationScrollOffset = 0;
         _cards.SuspendLayout();
@@ -607,6 +647,7 @@ public sealed class MainForm : Form
             var goodCount = _items.Count(item => item.Level == RecommendationLevel.Good);
             var attentionCount = _items.Count - goodCount;
             var score = 78 + (int)Math.Round(22D * goodCount / Math.Max(1, _items.Count));
+
             _scoreLabel.Text = $"{score}/100";
             _scoreCaption.Text = score >= 96 ? "Відмінний стан" : score >= 90 ? "Добрий стан" : "Є що покращити";
             _cpuValue.Text = NormalizeMetric(snapshot.Cpu);
@@ -614,8 +655,8 @@ public sealed class MainForm : Form
             _ramValue.Text = NormalizeMetric(snapshot.Ram);
             _windowsValue.Text = NormalizeMetric(snapshot.Windows);
             _statusLabel.Text = attentionCount == 0
-                ? "Перевірку завершено. Додаткові дії не потрібні."
-                : $"Перевірку завершено. Знайдено {attentionCount} безпечних рекомендацій.";
+                ? "Аналіз завершено: додаткові зміни не потрібні."
+                : $"Аналіз завершено: знайдено {attentionCount} рекомендацій. Нижче видно, що саме зробить кожна з них.";
             _recommendationCountLabel.Text = attentionCount == 0 ? "Усе налаштовано" : $"До застосування: {attentionCount}";
 
             var row = 0;
@@ -651,12 +692,13 @@ public sealed class MainForm : Form
         var card = new RoundedPanel
         {
             Dock = DockStyle.Fill,
-            Margin = new Padding(0, 0, 0, 10),
+            Margin = new Padding(0, 0, 0, 12),
             Padding = new Padding(14, 12, 14, 12),
             Radius = 16,
             BackColor = Theme.Card,
             BorderColor = Theme.Border
         };
+
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -668,7 +710,7 @@ public sealed class MainForm : Form
         };
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 158F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 172F));
 
         var check = new CheckBox
         {
@@ -691,13 +733,14 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
-            Margin = new Padding(0, 0, 12, 0),
+            RowCount = 3,
+            Margin = new Padding(0, 0, 14, 0),
             Padding = Padding.Empty,
             BackColor = Theme.Card
         };
-        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
         text.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        text.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
         text.Controls.Add(new Label
         {
             Text = item.Title,
@@ -712,12 +755,22 @@ public sealed class MainForm : Form
         {
             Text = item.Summary,
             Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.TopLeft,
+            TextAlign = ContentAlignment.MiddleLeft,
             AutoEllipsis = true,
             ForeColor = Theme.Muted,
             Font = new Font("Segoe UI", 8.8F),
             BackColor = Theme.Card
         }, 0, 1);
+        text.Controls.Add(new Label
+        {
+            Text = good ? "Змін не потрібно" : $"Зараз: {FormatCurrentState(item)}  →  Буде: {FormatRecommendedState(item)}",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoEllipsis = true,
+            ForeColor = good ? Theme.Good : Theme.Warning,
+            Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold),
+            BackColor = Theme.Card
+        }, 0, 2);
 
         var right = new TableLayoutPanel
         {
@@ -725,16 +778,17 @@ public sealed class MainForm : Form
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
-            Padding = Padding.Empty,
+            Padding = new Padding(8, 5, 0, 5),
             BackColor = Theme.Card
         };
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
         right.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+
         var pill = new RoundedPanel
         {
             Dock = DockStyle.Fill,
-            Margin = new Padding(8, 0, 0, 2),
+            Margin = Padding.Empty,
             Padding = Padding.Empty,
             Radius = 10,
             BackColor = good ? Color.FromArgb(25, 68, 53) : Color.FromArgb(74, 58, 30),
@@ -749,26 +803,65 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 7.6F, FontStyle.Bold),
             BackColor = pill.BackColor
         });
+
         var details = new Button
         {
-            Text = "Докладніше",
+            Text = "Що змінить",
             Dock = DockStyle.Fill,
-            Margin = new Padding(8, 0, 0, 0)
+            Margin = Padding.Empty,
+            MinimumSize = new Size(0, 38)
         };
         ConfigureSecondaryButton(details);
-        details.Click += (_, _) => MessageBox.Show(
-            $"{item.Details}\n\nПоточний стан: {item.CurrentValue}\nРекомендовано: {item.RecommendedValue}",
-            item.Title,
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        details.Click += (_, _) => ShowRecommendationDetails(item);
+
         right.Controls.Add(pill, 0, 0);
         right.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card }, 0, 1);
         right.Controls.Add(details, 0, 2);
+
         grid.Controls.Add(check, 0, 0);
         grid.Controls.Add(text, 1, 0);
         grid.Controls.Add(right, 2, 0);
         card.Controls.Add(grid);
         return card;
+    }
+
+    private void ShowRecommendationDetails(OptimizationItem item)
+    {
+        var restart = item.RequiresRestart ? "Так" : "Ні";
+        var message =
+            $"{item.Details}\n\n" +
+            $"Зараз: {FormatCurrentState(item)}\n" +
+            $"Після застосування: {FormatRecommendedState(item)}\n" +
+            $"Потрібне перезавантаження: {restart}\n\n" +
+            "Перед зміною TiHiY створить резервну копію.";
+
+        MessageBox.Show(message, item.Title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private static string FormatCurrentState(OptimizationItem item)
+    {
+        return item.Id switch
+        {
+            "game-mode" => item.CurrentValue == "1" ? "Увімкнено" : "Вимкнено / не задано",
+            "game-dvr" => item.CurrentValue == "0" ? "Вимкнено" : "Увімкнено / не задано",
+            "hags" => item.CurrentValue == "2" ? "Увімкнено" : "Вимкнено / не задано",
+            "mouse-accel" => item.CurrentValue == "0" ? "Вимкнено" : "Увімкнено / не задано",
+            "power-plan" => string.IsNullOrWhiteSpace(item.CurrentValue) ? "Невідомо" : item.CurrentValue,
+            _ => item.CurrentValue
+        };
+    }
+
+    private static string FormatRecommendedState(OptimizationItem item)
+    {
+        return item.Id switch
+        {
+            "game-mode" => "Увімкнено",
+            "game-dvr" => "Вимкнено",
+            "hags" => "Увімкнено",
+            "mouse-accel" => "Вимкнено",
+            "power-plan" => "Збалансований",
+            _ => item.RecommendedValue
+        };
     }
 
     private void AttachRecommendationWheel(Control control)
@@ -786,8 +879,9 @@ public sealed class MainForm : Form
         {
             return;
         }
+
         var direction = e.Delta > 0 ? -1 : 1;
-        SetRecommendationScroll(_recommendationScrollOffset + direction * 76);
+        SetRecommendationScroll(_recommendationScrollOffset + direction * 82);
     }
 
     private void SetRecommendationScroll(int offset)
@@ -804,6 +898,7 @@ public sealed class MainForm : Form
         {
             return;
         }
+
         var viewWidth = Math.Max(300, _recommendationsViewport.ClientSize.Width);
         _cards.Width = Math.Max(280, viewWidth - 15);
         var max = Math.Max(0, _cards.Height - _recommendationsViewport.ClientSize.Height);
@@ -821,6 +916,7 @@ public sealed class MainForm : Form
         {
             return;
         }
+
         var viewportHeight = Math.Max(1, _recommendationsViewport.ClientSize.Height);
         var thumbHeight = Math.Max(34, (int)Math.Round(_scrollTrack.Height * Math.Min(1D, viewportHeight / (double)_cards.Height)));
         thumbHeight = Math.Min(_scrollTrack.Height, thumbHeight);
@@ -835,20 +931,24 @@ public sealed class MainForm : Form
         {
             return;
         }
+
         var selected = _items.Where(item => item.Selected).ToArray();
         if (selected.Length == 0)
         {
             return;
         }
+
+        var summary = string.Join("\n", selected.Select(item => $"• {item.Title}: {FormatRecommendedState(item)}"));
         var confirmation = MessageBox.Show(
-            $"Буде застосовано змін: {selected.Length}.\n\nПеред початком програма створить резервну копію. Продовжити?",
-            "Підтвердження оптимізації",
+            $"Буде застосовано змін: {selected.Length}.\n\n{summary}\n\nПеред початком програма створить резервну копію. Продовжити?",
+            "Підтвердження змін",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
         if (confirmation != DialogResult.Yes)
         {
             return;
         }
+
         SetBusy(true, "Створюємо резервну копію…");
         try
         {
@@ -861,10 +961,11 @@ public sealed class MainForm : Form
             var restartText = selected.Any(item => item.RequiresRestart)
                 ? "\n\nДля завершення змін перезавантажте ПК."
                 : string.Empty;
+
             MessageBox.Show(
                 failed == 0
-                    ? $"Оптимізацію завершено.\n\nРезервна копія:\n{folder}{restartText}"
-                    : $"Оптимізацію завершено з попередженнями.\n\nПеревірте журнал:\n{Path.Combine(folder, "apply.log")}{restartText}",
+                    ? $"Зміни застосовано успішно.\n\nРезервна копія:\n{folder}{restartText}"
+                    : $"Зміни застосовано з попередженнями.\n\nПеревірте журнал:\n{Path.Combine(folder, "apply.log")}{restartText}",
                 "TiHiY System Optimizer",
                 MessageBoxButtons.OK,
                 failed == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
@@ -1023,6 +1124,7 @@ public sealed class MainForm : Form
             var right = point.X >= ClientSize.Width - grip;
             var top = point.Y <= grip;
             var bottom = point.Y >= ClientSize.Height - grip;
+
             if (top && left) message.Result = (IntPtr)HtTopLeft;
             else if (top && right) message.Result = (IntPtr)HtTopRight;
             else if (bottom && left) message.Result = (IntPtr)HtBottomLeft;
@@ -1033,6 +1135,7 @@ public sealed class MainForm : Form
             else if (bottom) message.Result = (IntPtr)HtBottom;
             return;
         }
+
         base.WndProc(ref message);
     }
 
