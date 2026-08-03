@@ -17,7 +17,15 @@ internal static class Program
             return;
         }
 
-        Application.Run(new MainForm());
+        var form = CreateMainForm();
+        Application.Run(form);
+    }
+
+    private static MainForm CreateMainForm()
+    {
+        var form = new MainForm();
+        AttachDisabledButtonVisuals(form);
+        return form;
     }
 
     private static bool TryRunSnapshotMode(string[] args)
@@ -34,13 +42,11 @@ internal static class Program
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? AppContext.BaseDirectory);
 
-        using var form = new MainForm
-        {
-            StartPosition = FormStartPosition.Manual,
-            Location = new Point(30, 30),
-            ClientSize = new Size(width, height),
-            ShowInTaskbar = false
-        };
+        using var form = CreateMainForm();
+        form.StartPosition = FormStartPosition.Manual;
+        form.Location = new Point(30, 30);
+        form.ClientSize = new Size(width, height);
+        form.ShowInTaskbar = false;
 
         var completed = false;
         var timer = new System.Windows.Forms.Timer { Interval = 6000 };
@@ -63,6 +69,36 @@ internal static class Program
         timer.Dispose();
 
         return completed || File.Exists(outputPath);
+    }
+
+    private static void AttachDisabledButtonVisuals(Control root)
+    {
+        foreach (Control control in root.Controls)
+        {
+            if (control is Button button)
+            {
+                var enabledBackColor = button.BackColor;
+                var enabledForeColor = button.ForeColor;
+                void UpdateAppearance()
+                {
+                    if (button.Enabled)
+                    {
+                        button.BackColor = enabledBackColor;
+                        button.ForeColor = enabledForeColor;
+                    }
+                    else
+                    {
+                        button.BackColor = Theme.CardHover;
+                        button.ForeColor = Theme.Subtle;
+                    }
+                }
+
+                button.EnabledChanged += (_, _) => UpdateAppearance();
+                UpdateAppearance();
+            }
+
+            AttachDisabledButtonVisuals(control);
+        }
     }
 
     private static void SelectSnapshotPage(MainForm form, string page)
