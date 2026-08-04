@@ -25,6 +25,7 @@ internal static class Program
     {
         var form = new MainForm();
         StreamingUiInstaller.Attach(form);
+        StarCitizenUiEnhancer.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
@@ -122,6 +123,10 @@ internal static class Program
 
             var value = Enum.Parse(pageType, page, ignoreCase: true);
             showPage.Invoke(form, [value]);
+            if (string.Equals(page, "StarCitizen", StringComparison.OrdinalIgnoreCase))
+            {
+                StarCitizenUiEnhancer.Enhance(form);
+            }
         }
         catch
         {
