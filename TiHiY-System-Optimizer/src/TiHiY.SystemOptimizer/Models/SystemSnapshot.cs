@@ -15,6 +15,7 @@ public sealed class SystemSnapshot
     public string? SteelSeriesPath { get; init; }
     public IReadOnlyList<StarCitizenInstallation> StarCitizenInstallations { get; init; } = Array.Empty<StarCitizenInstallation>();
     public IReadOnlyList<string> StarCitizenShaderCaches { get; init; } = Array.Empty<string>();
+    public StreamAudit StreamAudit { get; init; } = new();
 
     public string? StarCitizenPath => StarCitizenInstallations.FirstOrDefault()?.Path;
     public bool StarCitizenFound => StarCitizenInstallations.Count > 0;
