@@ -34,6 +34,8 @@ jobs:
             @{ W = 1280; H = 800; Page = "Overview"; Name = "overview-1280x800.png" },
             @{ W = 1600; H = 900; Page = "Overview"; Name = "overview-1600x900.png" },
             @{ W = 1280; H = 800; Page = "Applications"; Name = "applications-1280x800.png" },
+            @{ W = 1280; H = 800; Page = "Streaming"; Name = "streaming-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Streaming"; Name = "streaming-1040x700.png" },
             @{ W = 1280; H = 800; Page = "StarCitizen"; Name = "star-citizen-1280x800.png" },
             @{ W = 1280; H = 800; Page = "Restore"; Name = "restore-1280x800.png" }
           )
@@ -47,12 +49,12 @@ jobs:
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-v0.2-ui-preview
+          name: TiHiY-System-Optimizer-v0.3-ui-preview
           path: artifacts/ui-preview/
           if-no-files-found: error
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-v0.2-win-x64
+          name: TiHiY-System-Optimizer-v0.3-win-x64
           path: artifacts/TiHiY-System-Optimizer/
           if-no-files-found: error
