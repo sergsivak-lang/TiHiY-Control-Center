@@ -24,6 +24,7 @@ internal static class Program
     private static MainForm CreateMainForm()
     {
         var form = new MainForm();
+        StreamingUiInstaller.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
@@ -103,6 +104,13 @@ internal static class Program
 
     private static void SelectSnapshotPage(MainForm form, string page)
     {
+        if (string.Equals(page, "Streaming", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(page, "Stream", StringComparison.OrdinalIgnoreCase))
+        {
+            StreamingUiInstaller.ShowStreamingPage(form);
+            return;
+        }
+
         try
         {
             var pageType = typeof(MainForm).GetNestedType("PageKind", BindingFlags.NonPublic);
