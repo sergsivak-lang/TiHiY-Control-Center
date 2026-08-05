@@ -26,6 +26,7 @@ internal static class Program
         var form = new MainForm();
         StreamingUiInstaller.Attach(form);
         StarCitizenUiEnhancer.Attach(form);
+        StarCitizenMaintenanceUiInstaller.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
@@ -109,6 +110,13 @@ internal static class Program
             || string.Equals(page, "Stream", StringComparison.OrdinalIgnoreCase))
         {
             StreamingUiInstaller.ShowStreamingPage(form);
+            return;
+        }
+
+        if (string.Equals(page, "Maintenance", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(page, "Cleanup", StringComparison.OrdinalIgnoreCase))
+        {
+            StarCitizenMaintenanceUiInstaller.ShowMaintenancePage(form);
             return;
         }
 
