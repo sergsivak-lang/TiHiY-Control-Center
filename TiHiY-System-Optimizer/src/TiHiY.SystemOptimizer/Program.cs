@@ -36,6 +36,7 @@ internal static class Program
         StarCitizenMaintenanceResponsiveFix.Attach(form);
         StartupUiInstaller.Attach(form);
         GpuUiInstaller.Attach(form);
+        SidebarResponsiveFix.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
