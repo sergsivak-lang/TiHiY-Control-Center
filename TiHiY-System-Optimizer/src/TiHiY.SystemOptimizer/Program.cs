@@ -35,6 +35,7 @@ internal static class Program
         StarCitizenMaintenanceUiInstaller.Attach(form);
         StarCitizenMaintenanceResponsiveFix.Attach(form);
         StartupUiInstaller.Attach(form);
+        GpuUiInstaller.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
@@ -153,6 +154,13 @@ internal static class Program
         if (string.Equals(page, "Startup", StringComparison.OrdinalIgnoreCase))
         {
             StartupUiInstaller.ShowPage(form);
+            return;
+        }
+
+        if (string.Equals(page, "Gpu", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(page, "Nvidia", StringComparison.OrdinalIgnoreCase))
+        {
+            GpuUiInstaller.ShowPage(form);
             return;
         }
 
