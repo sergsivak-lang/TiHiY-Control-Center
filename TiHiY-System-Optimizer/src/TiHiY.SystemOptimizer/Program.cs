@@ -1,4 +1,5 @@
 using System.Reflection;
+using TiHiY.SystemOptimizer.Core;
 using TiHiY.SystemOptimizer.UI;
 
 namespace TiHiY.SystemOptimizer;
@@ -11,6 +12,11 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+
+        if (TryRunMaintenanceSelfTest(args))
+        {
+            return;
+        }
 
         if (TryRunSnapshotMode(args))
         {
@@ -27,8 +33,20 @@ internal static class Program
         StreamingUiInstaller.Attach(form);
         StarCitizenUiEnhancer.Attach(form);
         StarCitizenMaintenanceUiInstaller.Attach(form);
+        StarCitizenMaintenanceResponsiveFix.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
+    }
+
+    private static bool TryRunMaintenanceSelfTest(string[] args)
+    {
+        if (args.Length == 0 || !string.Equals(args[0], "--maintenance-selftest", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        MaintenanceSelfTest.RunAsync().GetAwaiter().GetResult();
+        return true;
     }
 
     private static bool TryRunSnapshotMode(string[] args)
