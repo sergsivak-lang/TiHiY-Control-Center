@@ -34,6 +34,13 @@ jobs:
           if (!$dll) { throw "Built application DLL was not found" }
           dotnet $dll --maintenance-selftest
           if ($LASTEXITCODE -ne 0) { throw "Maintenance engine self-test failed with exit code $LASTEXITCODE" }
+      - name: Startup manager self-test
+        shell: pwsh
+        run: |
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+          dotnet $dll --startup-selftest
+          if ($LASTEXITCODE -ne 0) { throw "Startup manager self-test failed with exit code $LASTEXITCODE" }
       - name: Capture and verify real UI pages
         shell: pwsh
         env:
@@ -53,6 +60,8 @@ jobs:
             @{ W = 1280; H = 800; Page = "StarCitizen"; Name = "star-citizen-1280x800.png" },
             @{ W = 1280; H = 800; Page = "Maintenance"; Name = "maintenance-1280x800.png" },
             @{ W = 1040; H = 700; Page = "Maintenance"; Name = "maintenance-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Startup"; Name = "startup-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Startup"; Name = "startup-1040x700.png" },
             @{ W = 1280; H = 800; Page = "Restore"; Name = "restore-1280x800.png" }
           )
 
@@ -65,12 +74,12 @@ jobs:
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-v0.4-ui-preview
+          name: TiHiY-System-Optimizer-v0.5-ui-preview
           path: artifacts/ui-preview/
           if-no-files-found: error
       - name: Upload Windows app
         uses: actions/upload-artifact@v4
         with:
-          name: TiHiY-System-Optimizer-v0.4-win-x64
+          name: TiHiY-System-Optimizer-v0.5-win-x64
           path: artifacts/TiHiY-System-Optimizer/
           if-no-files-found: error
