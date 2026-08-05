@@ -27,6 +27,13 @@ jobs:
           if ($files.Count -ne 1) { throw "Expected exactly one published file, found $($files.Count): $($files.Name -join ', ')" }
           if ($files[0].Extension -ne ".exe") { throw "Published file is not an EXE: $($files[0].Name)" }
           if ($files[0].Length -lt 30000000) { throw "Published EXE is unexpectedly small: $($files[0].Length) bytes" }
+      - name: Maintenance engine self-test
+        shell: pwsh
+        run: |
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+          dotnet $dll --maintenance-selftest
+          if ($LASTEXITCODE -ne 0) { throw "Maintenance engine self-test failed with exit code $LASTEXITCODE" }
       - name: Capture and verify real UI pages
         shell: pwsh
         env:
