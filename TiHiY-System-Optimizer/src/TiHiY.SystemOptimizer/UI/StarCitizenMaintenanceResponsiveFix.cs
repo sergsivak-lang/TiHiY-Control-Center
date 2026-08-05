@@ -26,34 +26,40 @@ internal static class StarCitizenMaintenanceResponsiveFix
         if (page is null) return;
 
         var compact = form.ClientSize.Height <= 720;
+        var outerLayout = page.Controls.OfType<TableLayoutPanel>().FirstOrDefault(panel => panel.RowCount == 4 && panel.ColumnCount == 1);
+        if (outerLayout is not null && outerLayout.RowStyles.Count >= 4)
+        {
+            outerLayout.RowStyles[0].SizeType = SizeType.Absolute;
+            outerLayout.RowStyles[0].Height = compact ? 62F : 76F;
+            outerLayout.RowStyles[1].SizeType = SizeType.Absolute;
+            outerLayout.RowStyles[1].Height = compact ? 104F : 126F;
+            outerLayout.RowStyles[3].SizeType = SizeType.Absolute;
+            outerLayout.RowStyles[3].Height = compact ? 58F : 66F;
+        }
+
+        var cleanupTitle = EnumerateControls(page).OfType<Label>()
+            .FirstOrDefault(label => string.Equals(label.Text, "Що можна безпечно очистити", StringComparison.Ordinal));
+        if (cleanupTitle?.Parent is TableLayoutPanel cleanupLayout && cleanupLayout.RowStyles.Count >= 3)
+        {
+            cleanupLayout.RowStyles[2].SizeType = SizeType.Absolute;
+            cleanupLayout.RowStyles[2].Height = compact ? 28F : 38F;
+        }
+
         foreach (var panel in EnumerateControls(page).OfType<TableLayoutPanel>())
         {
             if (panel.RowCount != 2 || panel.ColumnCount != 1) continue;
             var labels = panel.Controls.OfType<Label>().ToArray();
             if (labels.Length != 2) continue;
-
             var title = labels.FirstOrDefault(label => label.Font.Bold && label.Font.Size >= 8.5F && label.Font.Size <= 9.5F);
             var description = labels.FirstOrDefault(label => !label.Font.Bold && label.Font.Size >= 7F && label.Font.Size <= 8F);
             if (title is null || description is null) continue;
 
-            if (compact)
-            {
-                panel.RowStyles[0].SizeType = SizeType.Percent;
-                panel.RowStyles[0].Height = 100F;
-                panel.RowStyles[1].SizeType = SizeType.Absolute;
-                panel.RowStyles[1].Height = 0F;
-                description.Visible = false;
-                title.TextAlign = ContentAlignment.MiddleLeft;
-            }
-            else
-            {
-                panel.RowStyles[0].SizeType = SizeType.Percent;
-                panel.RowStyles[0].Height = 48F;
-                panel.RowStyles[1].SizeType = SizeType.Percent;
-                panel.RowStyles[1].Height = 52F;
-                description.Visible = true;
-                title.TextAlign = ContentAlignment.BottomLeft;
-            }
+            panel.RowStyles[0].SizeType = SizeType.Percent;
+            panel.RowStyles[0].Height = 48F;
+            panel.RowStyles[1].SizeType = SizeType.Percent;
+            panel.RowStyles[1].Height = 52F;
+            description.Visible = true;
+            title.TextAlign = ContentAlignment.BottomLeft;
         }
 
         foreach (var label in EnumerateControls(page).OfType<Label>())
@@ -63,11 +69,11 @@ internal static class StarCitizenMaintenanceResponsiveFix
                 && label.Font.Size <= 8.5F
                 && label.ForeColor.ToArgb() == Theme.Accent.ToArgb())
             {
-                label.AutoSize = true;
-                label.Dock = DockStyle.None;
-                label.Anchor = AnchorStyles.Right;
+                label.AutoSize = false;
+                label.Dock = DockStyle.Fill;
+                label.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 label.TextAlign = ContentAlignment.MiddleRight;
-                label.Margin = new Padding(0, 0, 2, 0);
+                label.Margin = Padding.Empty;
             }
         }
 
