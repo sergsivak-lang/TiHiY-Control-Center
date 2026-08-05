@@ -22,8 +22,11 @@ internal static class StarCitizenMaintenanceResponsiveFix
 
     private static void Apply(MainForm form)
     {
+        var page = FindMaintenancePage(form);
+        if (page is null) return;
+
         var compact = form.ClientSize.Height <= 720;
-        foreach (var panel in EnumerateControls(form).OfType<TableLayoutPanel>())
+        foreach (var panel in EnumerateControls(page).OfType<TableLayoutPanel>())
         {
             if (panel.RowCount != 2 || panel.ColumnCount != 1) continue;
             var labels = panel.Controls.OfType<Label>().ToArray();
@@ -53,7 +56,7 @@ internal static class StarCitizenMaintenanceResponsiveFix
             }
         }
 
-        foreach (var label in EnumerateControls(form).OfType<Label>())
+        foreach (var label in EnumerateControls(page).OfType<Label>())
         {
             if (label.Font.Bold
                 && label.Font.Size >= 7.8F
@@ -67,6 +70,34 @@ internal static class StarCitizenMaintenanceResponsiveFix
                 label.Margin = new Padding(0, 0, 2, 0);
             }
         }
+
+        var launcherButton = EnumerateControls(page).OfType<Button>()
+            .FirstOrDefault(button => string.Equals(button.Text, "RSI Launcher / Verify", StringComparison.Ordinal));
+        if (launcherButton is not null)
+        {
+            launcherButton.Text = "Відкрити RSI Launcher";
+        }
+    }
+
+    private static Control? FindMaintenancePage(Control root)
+    {
+        var title = EnumerateControls(root).OfType<Label>()
+            .FirstOrDefault(label => string.Equals(label.Text, "Очищення Star Citizen", StringComparison.Ordinal));
+        if (title is null) return null;
+
+        Control? current = title;
+        while (current is not null)
+        {
+            if (current is Panel panel
+                && panel.Dock == DockStyle.Fill
+                && panel.Padding.Left == 26
+                && panel.Padding.Top == 16)
+            {
+                return panel;
+            }
+            current = current.Parent;
+        }
+        return null;
     }
 
     private static IEnumerable<Control> EnumerateControls(Control root)
