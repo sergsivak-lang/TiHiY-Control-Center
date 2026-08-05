@@ -1,0 +1,87 @@
+name: Build TiHiY System Optimizer
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "feature/tihiy-system-optimizer-v0.1" ]
+    paths: [ "TiHiY-System-Optimizer/**", ".github/workflows/build-optimizer.yml" ]
+  pull_request:
+    paths: [ "TiHiY-System-Optimizer/**", ".github/workflows/build-optimizer.yml" ]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln
+      - name: Build
+        run: dotnet build TiHiY-System-Optimizer/TiHiY-System-Optimizer.sln -c Release --no-restore
+      - name: Publish single EXE
+        run: dotnet publish TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/TiHiY.SystemOptimizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/TiHiY-System-Optimizer
+      - name: Verify single-file publish
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem "artifacts/TiHiY-System-Optimizer" -File)
+          if ($files.Count -ne 1) { throw "Expected exactly one published file, found $($files.Count): $($files.Name -join ', ')" }
+          if ($files[0].Extension -ne ".exe") { throw "Published file is not an EXE: $($files[0].Name)" }
+          if ($files[0].Length -lt 30000000) { throw "Published EXE is unexpectedly small: $($files[0].Length) bytes" }
+      - name: Maintenance engine self-test
+        shell: pwsh
+        run: |
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+          dotnet $dll --maintenance-selftest
+          if ($LASTEXITCODE -ne 0) { throw "Maintenance engine self-test failed with exit code $LASTEXITCODE" }
+      - name: Startup manager self-test
+        shell: pwsh
+        run: |
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+          dotnet $dll --startup-selftest
+          if ($LASTEXITCODE -ne 0) { throw "Startup manager self-test failed with exit code $LASTEXITCODE" }
+      - name: Capture and verify real UI pages
+        shell: pwsh
+        env:
+          TIHIY_UI_SNAPSHOT: "1"
+        run: |
+          New-Item -ItemType Directory -Force artifacts/ui-preview | Out-Null
+          $dll = (Get-ChildItem "TiHiY-System-Optimizer/src/TiHiY.SystemOptimizer/bin/Release" -Recurse -Filter "TiHiY System Optimizer.dll" | Where-Object { $_.FullName -notmatch '\\ref\\' } | Select-Object -First 1).FullName
+          if (!$dll) { throw "Built application DLL was not found" }
+
+          $shots = @(
+            @{ W = 1040; H = 700; Page = "Overview"; Name = "overview-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Overview"; Name = "overview-1280x800.png" },
+            @{ W = 1600; H = 900; Page = "Overview"; Name = "overview-1600x900.png" },
+            @{ W = 1280; H = 800; Page = "Applications"; Name = "applications-1280x800.png" },
+            @{ W = 1280; H = 800; Page = "Streaming"; Name = "streaming-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Streaming"; Name = "streaming-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "StarCitizen"; Name = "star-citizen-1280x800.png" },
+            @{ W = 1280; H = 800; Page = "Maintenance"; Name = "maintenance-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Maintenance"; Name = "maintenance-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Startup"; Name = "startup-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Startup"; Name = "startup-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Gpu"; Name = "gpu-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Gpu"; Name = "gpu-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Restore"; Name = "restore-1280x800.png" }
+          )
+
+          foreach ($shot in $shots) {
+            $target = Join-Path "artifacts/ui-preview" $shot.Name
+            dotnet $dll --snapshot $target $shot.W $shot.H $shot.Page
+            if (!(Test-Path $target)) { throw "UI snapshot was not created: $target" }
+            if ((Get-Item $target).Length -lt 10000) { throw "UI snapshot is unexpectedly small: $target" }
+          }
+      - name: Upload UI previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: TiHiY-System-Optimizer-v0.5-ui-preview
+          path: artifacts/ui-preview/
+          if-no-files-found: error
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: TiHiY-System-Optimizer-v0.5-win-x64
+          path: artifacts/TiHiY-System-Optimizer/
+          if-no-files-found: error
