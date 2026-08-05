@@ -62,6 +62,8 @@ jobs:
             @{ W = 1040; H = 700; Page = "Maintenance"; Name = "maintenance-1040x700.png" },
             @{ W = 1280; H = 800; Page = "Startup"; Name = "startup-1280x800.png" },
             @{ W = 1040; H = 700; Page = "Startup"; Name = "startup-1040x700.png" },
+            @{ W = 1280; H = 800; Page = "Gpu"; Name = "gpu-1280x800.png" },
+            @{ W = 1040; H = 700; Page = "Gpu"; Name = "gpu-1040x700.png" },
             @{ W = 1280; H = 800; Page = "Restore"; Name = "restore-1280x800.png" }
           )
 
