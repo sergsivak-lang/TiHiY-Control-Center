@@ -7,7 +7,7 @@ namespace TiHiY.SystemOptimizer.UI;
 
 internal static class StartupUiInstaller
 {
-    private const int ItemsPerPage = 5;
+    private const int ItemsPerPage = 4;
     private static readonly ConditionalWeakTable<MainForm, State> States = new();
 
     public static void Attach(MainForm form)
@@ -113,6 +113,7 @@ internal static class StartupUiInstaller
                 MessageBoxButtons.OK,
                 result.Failed == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             state.SelectedIds.Clear();
+            state.InitializedIds.Clear();
             state.PageIndex = 0;
             await RefreshAsync(state);
         }
@@ -143,6 +144,8 @@ internal static class StartupUiInstaller
                 "Автозапуск відновлено",
                 MessageBoxButtons.OK,
                 result.Failed == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            state.SelectedIds.Clear();
+            state.InitializedIds.Clear();
             await RefreshAsync(state);
         }
         finally
@@ -306,6 +309,7 @@ internal static class StartupUiInstaller
         {
             state.RowsPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F / ItemsPerPage));
             var row = CreateRow();
+            row.Check.CheckedChanged += (_, _) => OnRowSelectionChanged(state, row);
             state.Rows.Add(row);
             state.RowsPanel.Controls.Add(row.Root, 0, index);
         }
@@ -348,8 +352,8 @@ internal static class StartupUiInstaller
             Padding = Padding.Empty,
             BackColor = Theme.Card
         };
-        text.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
-        text.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
+        text.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
+        text.RowStyles.Add(new RowStyle(SizeType.Percent, 56F));
         var title = new Label
         {
             Dock = DockStyle.Fill,
@@ -509,12 +513,25 @@ internal static class StartupUiInstaller
         state.PreviousButton.Enabled = state.PageIndex > 0;
         state.NextButton.Enabled = state.PageIndex < pages - 1;
         state.RestoreButton.Enabled = !state.Busy && state.Service.GetLatestBackupFolder() is not null;
-        state.PageLabel.Text = $"Сторінка {state.PageIndex + 1} з {pages} • вибрано: {state.SelectedIds.Count}";
-        state.ApplyButton.Enabled = !state.Busy && state.SelectedIds.Count > 0;
+        UpdateSelectionSummary(state);
         state.StatusLabel.Text = state.Snapshot.Items.Count == 0
             ? "Автозапуск порожній — додаткових дій не потрібно."
             : $"Знайдено {state.Snapshot.Items.Count} пунктів. TiHiY автоматично відмічає лише відомі необов'язкові програми.";
         state.StatusLabel.ForeColor = Theme.Muted;
+    }
+
+    private static void OnRowSelectionChanged(State state, RowView row)
+    {
+        if (string.IsNullOrWhiteSpace(row.ItemId) || !row.Check.Enabled) return;
+        if (row.Check.Checked) state.SelectedIds.Add(row.ItemId);
+        else state.SelectedIds.Remove(row.ItemId);
+        UpdateSelectionSummary(state);
+    }
+
+    private static void UpdateSelectionSummary(State state)
+    {
+        state.PageLabel.Text = $"Сторінка {state.PageIndex + 1} з {PageCount(state)} • вибрано: {state.SelectedIds.Count}";
+        state.ApplyButton.Enabled = !state.Busy && state.SelectedIds.Count > 0;
     }
 
     private static void ChangePage(State state, int delta)
@@ -668,7 +685,6 @@ internal static class StartupUiInstaller
             Detail = detail;
             Source = source;
             Advice = advice;
-            Check.CheckedChanged += (_, _) => { };
         }
         public TableLayoutPanel Root { get; }
         public CheckBox Check { get; }
