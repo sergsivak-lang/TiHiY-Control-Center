@@ -13,7 +13,7 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
-        if (TryRunMaintenanceSelfTest(args))
+        if (TryRunMaintenanceSelfTest(args) || TryRunStartupSelfTest(args))
         {
             return;
         }
@@ -34,6 +34,7 @@ internal static class Program
         StarCitizenUiEnhancer.Attach(form);
         StarCitizenMaintenanceUiInstaller.Attach(form);
         StarCitizenMaintenanceResponsiveFix.Attach(form);
+        StartupUiInstaller.Attach(form);
         AttachDisabledButtonVisuals(form);
         return form;
     }
@@ -46,6 +47,17 @@ internal static class Program
         }
 
         MaintenanceSelfTest.RunAsync().GetAwaiter().GetResult();
+        return true;
+    }
+
+    private static bool TryRunStartupSelfTest(string[] args)
+    {
+        if (args.Length == 0 || !string.Equals(args[0], "--startup-selftest", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        StartupSelfTest.RunAsync().GetAwaiter().GetResult();
         return true;
     }
 
@@ -135,6 +147,12 @@ internal static class Program
             || string.Equals(page, "Cleanup", StringComparison.OrdinalIgnoreCase))
         {
             StarCitizenMaintenanceUiInstaller.ShowMaintenancePage(form);
+            return;
+        }
+
+        if (string.Equals(page, "Startup", StringComparison.OrdinalIgnoreCase))
+        {
+            StartupUiInstaller.ShowPage(form);
             return;
         }
 
